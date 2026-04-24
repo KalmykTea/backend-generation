@@ -14,7 +14,7 @@ public interface UserRequestDTOMapper {
     @Mapping(source = "email", target = "email")
     @Mapping(source = "password", target = "password")
     @Mapping(source = "bsnNumber", target = "bsnNumber")
-    @Mapping(source = "birthDate", target = "birthDate")
+    @Mapping(source = "birthdate", target = "birthdate")
     @Mapping(source = "phoneNumber", target = "phoneNumber")
     User toEntity(UserRequestDTO userRequestDTO);
     UserRequestDTO toDTO(User user);

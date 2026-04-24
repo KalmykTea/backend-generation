@@ -9,5 +9,7 @@ import org.mapstruct.Mapping;
 public interface TransactionResponseDTOMapper {
     @Mapping(source = "fromAccount.iban", target = "fromAccountIBAN")
     @Mapping(source = "toAccount.iban", target = "toAccountIBAN")
+    @Mapping(source = "fromAccount.user.firstName", target = "fromAccountFirstName")
+    @Mapping(source = "toAccount.user.lastName", target = "toAccountLastName")
     TransactionResponseDTO toDTO(Transaction transaction);
 }
