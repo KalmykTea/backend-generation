@@ -8,8 +8,6 @@ import java.time.LocalDate;
 
 @Data
 public class UserRequestDTO {
-    @Positive
-    private Long id;
 
     @Valid
     private AddressRequestDTO address;

@@ -49,7 +49,7 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Role role;
+    private Role role = Role.CUSTOMER;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "user_status", nullable = false)
