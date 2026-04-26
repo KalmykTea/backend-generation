@@ -1,27 +1,26 @@
 package com.example.generation.dtos.RequestDTOs;
 
 import com.example.generation.enums.TransactionType;
+import com.example.generation.framework.annotations.ValidIBAN;
+import com.example.generation.framework.groups.OnCreate;
+import com.example.generation.framework.groups.OnUpdate;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Data
 public class TransactionRequestDTO {
 
-    @NotBlank
-    @Pattern(
-            regexp = "^NL\\d{2}[A-Z]{4}\\d{10}$",
-            message = "Invalid Dutch IBAN format"
-    )
+    @Null(groups = OnCreate.class, message = "ID must be null on creation")
+    private Long id;
+
+    @ValidIBAN(groups = {OnCreate.class, OnUpdate.class})
     private String fromAccountIBAN;
 
-    @NotBlank
-    @Pattern(
-            regexp = "^NL\\d{2}[A-Z]{4}\\d{10}$",
-            message = "Invalid Dutch IBAN format"
-    )
+    @ValidIBAN(groups = {OnCreate.class, OnUpdate.class})
     private String toAccountIBAN;
 
     @NotNull
@@ -33,5 +32,6 @@ public class TransactionRequestDTO {
     private String description;
 
     @NotNull
+    @Enumerated(EnumType.STRING)
     private TransactionType transactionType;
 }
