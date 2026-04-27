@@ -14,13 +14,13 @@ import java.math.BigDecimal;
 @Data
 public class TransactionRequestDTO {
 
-    @Null(groups = OnCreate.class, message = "ID must be null on creation")
+    @Null
     private Long id;
 
-    @ValidIBAN(groups = {OnCreate.class, OnUpdate.class})
+    @ValidIBAN
     private String fromAccountIBAN;
 
-    @ValidIBAN(groups = {OnCreate.class, OnUpdate.class})
+    @ValidIBAN
     private String toAccountIBAN;
 
     @NotNull

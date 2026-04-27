@@ -9,6 +9,7 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface AddressRequestDTOMapper {
     @BeanMapping(ignoreByDefault = true)
+    @Mapping(source = "id", target = "id")
     @Mapping(source = "addressLine", target = "addressLine")
     @Mapping(source = "postalCode", target = "postalCode")
     @Mapping(source = "city", target = "city")
