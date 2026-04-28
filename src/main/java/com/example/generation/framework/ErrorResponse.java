@@ -1,11 +1,8 @@
 package com.example.generation.framework;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
-import lombok.NonNull;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
