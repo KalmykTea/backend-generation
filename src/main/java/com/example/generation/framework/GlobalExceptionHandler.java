@@ -1,6 +1,8 @@
 package com.example.generation.framework;
 
+import com.example.generation.framework.exceptions.InsufficientBalanceException;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -18,9 +20,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         String name = ex.getName();
         String type = ex.getRequiredType().getSimpleName();
-        return ResponseEntity.badRequest().body(new ErrorResponse(
-               HttpStatus.INTERNAL_SERVER_ERROR.value(), name + " should be of " + type, List.of()
-        ));
+        return new ResponseEntity<>(new ErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(), name + " should be of type " + type , List.of()
+        ),  HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -30,25 +32,42 @@ public class GlobalExceptionHandler {
                 .map(err -> Map.of("field", err.getField(), "message", err.getDefaultMessage()))
                 .toList();
 
-        ErrorResponse response = new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(), "Validation failed", fieldErrors
-        );
-        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(new ErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(), "Validation Failed", fieldErrors
+        ),  HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException ex) {
+        List<Map<String, String>> fieldErrors = ex.getConstraintViolations()
+                .stream()
+                .map(v -> Map.of("field", v.getPropertyPath().toString(), "message", v.getMessage()))
+                .toList();
+
+        return new ResponseEntity<>(new ErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage(), fieldErrors
+        ),  HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(InsufficientBalanceException.class)
+    public ResponseEntity<ErrorResponse> handleInsufficientBalance(InsufficientBalanceException ex) {
+        return new ResponseEntity<>(new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(), ex.getMessage(), List.of()
+        ),  HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(EntityNotFoundException ex) {
-        ErrorResponse response = new ErrorResponse(
+        return new ResponseEntity<>(new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(), ex.getMessage(), List.of()
-        );
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        ),  HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
         ex.printStackTrace();
-        return ResponseEntity.badRequest().body(new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(), "Unexpected server error", List.of()
-        ));
+        return new ResponseEntity<>(new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(), "Unexpected Server Error", List.of()
+        ),  HttpStatus.BAD_REQUEST);
     }
 }

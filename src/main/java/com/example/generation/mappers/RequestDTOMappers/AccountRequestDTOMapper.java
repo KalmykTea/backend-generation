@@ -7,7 +7,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 
-@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
+@Mapper(componentModel = "spring", uses = {UserRequestDTOMapper.class})
 public interface AccountRequestDTOMapper {
     @BeanMapping(ignoreByDefault = true)
     @Mapping(source = "id", target = "id")
@@ -16,7 +16,7 @@ public interface AccountRequestDTOMapper {
     @Mapping(source = "absoluteLimit", target = "absoluteLimit")
     @Mapping(source = "dailyLimit", target = "dailyLimit")
     @Mapping(source = "dailyTransfer", target = "dailyTransfer")
-    @Mapping(target = "user", ignore = true)
+    @Mapping(source = "user", target = "user")
     Account toEntity(AccountRequestDTO accountRequestDTO);
     AccountRequestDTO toDTO(Account account);
 }

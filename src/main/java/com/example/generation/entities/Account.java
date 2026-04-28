@@ -2,6 +2,8 @@ package com.example.generation.entities;
 
 import com.example.generation.enums.AccountStatus;
 import com.example.generation.enums.AccountType;
+import com.example.generation.enums.TransactionType;
+import com.example.generation.framework.exceptions.InsufficientBalanceException;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -52,5 +54,18 @@ public class Account {
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    public void transact(BigDecimal amount, TransactionType type){
+        BigDecimal newBalance = BigDecimal.ZERO;
+        if (type == TransactionType.DEPOSIT) {
+            newBalance = balance.add(amount);
+        } else {
+            newBalance = balance.subtract(amount);
+        }
+        if (newBalance.compareTo(absoluteLimit) < 0) {
+            throw new InsufficientBalanceException();
+        }
+        balance = newBalance;
+    }
 
 }

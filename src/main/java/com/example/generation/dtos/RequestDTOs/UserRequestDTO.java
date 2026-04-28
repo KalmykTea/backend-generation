@@ -3,6 +3,7 @@ package com.example.generation.dtos.RequestDTOs;
 import com.example.generation.framework.annotations.ValidBSN;
 import com.example.generation.framework.annotations.ValidBirthDate;
 import com.example.generation.framework.groups.OnCreate;
+import com.example.generation.framework.groups.OnTransaction;
 import com.example.generation.framework.groups.OnUpdate;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
@@ -14,7 +15,7 @@ import java.time.LocalDate;
 public class UserRequestDTO {
 
     @Null(groups = OnCreate.class, message = "ID must be null on creation")
-    @NotNull(groups = OnUpdate.class, message = "ID is required for updates")
+    @NotNull(groups = {OnUpdate.class, OnTransaction.class}, message = "ID is required for updates")
     private Long id;
 
     @Valid
