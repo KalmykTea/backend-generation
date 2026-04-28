@@ -1,5 +1,6 @@
 package com.example.generation.framework;
 
+import com.example.generation.framework.exceptions.DailyLimitReachedException;
 import com.example.generation.framework.exceptions.InsufficientBalanceException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
@@ -51,6 +52,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InsufficientBalanceException.class)
     public ResponseEntity<ErrorResponse> handleInsufficientBalance(InsufficientBalanceException ex) {
+        return new ResponseEntity<>(new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(), ex.getMessage(), List.of()
+        ),  HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(DailyLimitReachedException.class)
+    public ResponseEntity<ErrorResponse> handleInsufficientBalance(DailyLimitReachedException ex) {
         return new ResponseEntity<>(new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(), ex.getMessage(), List.of()
         ),  HttpStatus.BAD_REQUEST);
