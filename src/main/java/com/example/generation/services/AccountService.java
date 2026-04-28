@@ -1,7 +1,9 @@
 package com.example.generation.services;
 
 import com.example.generation.entities.Account;
+import com.example.generation.entities.Transaction;
 import com.example.generation.repositories.AccountRepository;
+import com.example.generation.repositories.TransactionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -10,9 +12,14 @@ import java.util.Optional;
 @Service
 public class AccountService {
     private final AccountRepository accountRepository;
+    private final TransactionRepository transactionRepository;
 
-    public AccountService (AccountRepository accountRepository) {
+    public AccountService (
+            AccountRepository accountRepository,
+            TransactionRepository transactionRepository
+    ) {
         this.accountRepository = accountRepository;
+        this.transactionRepository = transactionRepository;
     }
 
     // basic stuff, input custom logic according to your user stories
@@ -37,7 +44,15 @@ public class AccountService {
         if (account.getAbsoluteLimit()!= null) existing.setAbsoluteLimit(account.getAbsoluteLimit());
         if (account.getDailyLimit()!= null) existing.setDailyLimit(account.getDailyLimit());
         if (account.getAccountStatus()!= null) existing.setAccountStatus(account.getAccountStatus());
-        return save(existing);
+        return accountRepository.save(existing);
+    }
+
+    public Account withdrawOrDeposit(Long id, Transaction transaction) {
+        Account account = this.findById(id);
+        account.transact(transaction.getAmount(), transaction.getTransactionType());
+        transactionRepository.save(transaction);
+        accountRepository.save(account);
+        return account;
     }
 
     public void deleteById(Integer id) {

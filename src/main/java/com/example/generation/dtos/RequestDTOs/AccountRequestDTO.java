@@ -3,7 +3,9 @@ package com.example.generation.dtos.RequestDTOs;
 import com.example.generation.enums.AccountType;
 import com.example.generation.framework.annotations.ValidIBAN;
 import com.example.generation.framework.groups.OnCreate;
+import com.example.generation.framework.groups.OnTransaction;
 import com.example.generation.framework.groups.OnUpdate;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
@@ -13,12 +15,11 @@ import java.math.BigDecimal;
 public class AccountRequestDTO {
 
     @Null(groups = OnCreate.class, message = "ID must be null on creation")
-    @NotNull(groups = OnUpdate.class, message = "ID is required for updates")
+    @NotNull(groups = {OnUpdate.class, OnTransaction.class}, message = "ID is required for updates")
     private Long id;
 
-    @NotNull(groups = OnCreate.class)
-    @Positive(groups = OnCreate.class)
-    private long userId;
+    @Valid
+    private UserRequestDTO user;
 
     @ValidIBAN(groups = {OnCreate.class})
     private String iban;
