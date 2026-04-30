@@ -8,8 +8,9 @@ import lombok.Setter;
 public class EntityAlreadyExistsException extends RuntimeException{
     private String field;
     private String message;
-    private EntityAlreadyExistsException(String field, String message){
+    public EntityAlreadyExistsException(String field, String message){
         super(message);
         this.field = field;
+        this.message = message;
     }
 }

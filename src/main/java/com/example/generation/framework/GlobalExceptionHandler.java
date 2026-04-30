@@ -1,6 +1,7 @@
 package com.example.generation.framework;
 
 import com.example.generation.framework.exceptions.DailyLimitReachedException;
+import com.example.generation.framework.exceptions.EntityAlreadyExistsException;
 import com.example.generation.framework.exceptions.InsufficientBalanceException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
@@ -22,8 +23,8 @@ public class GlobalExceptionHandler {
         String name = ex.getName();
         String type = ex.getRequiredType().getSimpleName();
         return new ResponseEntity<>(new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(), name + " should be of type " + type , List.of()
-        ),  HttpStatus.INTERNAL_SERVER_ERROR);
+                HttpStatus.BAD_REQUEST.value(), name + " should be of type " + type , List.of()
+        ),  HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -34,8 +35,8 @@ public class GlobalExceptionHandler {
                 .toList();
 
         return new ResponseEntity<>(new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(), "Validation Failed", fieldErrors
-        ),  HttpStatus.INTERNAL_SERVER_ERROR);
+                HttpStatus.BAD_REQUEST.value(), "Validation Failed", fieldErrors
+        ),  HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -46,8 +47,15 @@ public class GlobalExceptionHandler {
                 .toList();
 
         return new ResponseEntity<>(new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage(), fieldErrors
-        ),  HttpStatus.INTERNAL_SERVER_ERROR);
+                HttpStatus.BAD_REQUEST.value(), ex.getMessage(), fieldErrors
+        ),  HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(EntityAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleEntityAlreadyExists(EntityAlreadyExistsException ex) {
+        return new ResponseEntity<>(new ErrorResponse(
+                HttpStatus.CONFLICT.value(), "Entity Already Exists", List.of(Map.of("field", ex.getField(), "message", ex.getMessage()))
+        ), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(InsufficientBalanceException.class)
@@ -75,7 +83,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
         ex.printStackTrace();
         return new ResponseEntity<>(new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(), "Unexpected Server Error", List.of()
-        ),  HttpStatus.BAD_REQUEST);
+                HttpStatus.INTERNAL_SERVER_ERROR.value(), "Unexpected Server Error", List.of()
+        ),  HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
