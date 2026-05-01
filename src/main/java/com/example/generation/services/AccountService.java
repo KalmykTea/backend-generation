@@ -1,9 +1,11 @@
 package com.example.generation.services;
 
 import com.example.generation.entities.Account;
+import com.example.generation.entities.User;
 import com.example.generation.repositories.AccountRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -19,7 +21,7 @@ public class AccountService {
         return accountRepository.findAll();
     }
 
-    public Optional<Account> findById(Integer id) {
+    public Optional<Account> findById(Long id) {
         return accountRepository.findById(id);
     }
 
@@ -31,7 +33,13 @@ public class AccountService {
         return accountRepository.save(account);
     }
 
-    public void deleteById(Integer id) {
+    public void deleteById(Long id) {
         accountRepository.deleteById(id);
     }
+
+    public Optional<Account> findByIban(String iban) {
+        return  accountRepository.findByIban(iban); }
+
+    public List<Account> findByUser(User user) {
+        return  accountRepository.findByUser(user);}
 }
