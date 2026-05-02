@@ -1,9 +1,6 @@
 package com.example.generation.controllers;
 
 import com.example.generation.dtos.ResponseDTOs.UserResponseDTO;
-import com.example.generation.entities.User;
-import com.example.generation.enums.UserStatus;
-import com.example.generation.mappers.ResponseDTOMappers.UserResponseDTOMapper;
 import com.example.generation.services.AddressService;
 import com.example.generation.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,12 +17,10 @@ import java.util.List;
 public class UserController {
     final private UserService userService;
     final private AddressService addressService;
-    final private UserResponseDTOMapper userResponseDTOMapper;
 
-    public UserController(UserService userService, AddressService addressService, UserResponseDTOMapper userResponseDTOMapper) {
+    public UserController(UserService userService, AddressService addressService) {
         this.userService = userService;
         this.addressService = addressService;
-        this.userResponseDTOMapper = userResponseDTOMapper;
     }
 
     // controller methods based on user stories with swagger doc code go here
@@ -33,8 +28,7 @@ public class UserController {
     @Operation(summary = "Get list of customers pending approval")
     @GetMapping("/pending")
     public ResponseEntity<List<UserResponseDTO>> getPendingUsers() {
-        List<User> pendingUsers = userService.findByUserStatus(UserStatus.PENDING);
-        List<UserResponseDTO> result = pendingUsers.stream().map(userResponseDTOMapper::toDTO).toList();
+        List<UserResponseDTO> result = userService.getPendingUsers();
 
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
@@ -45,8 +39,7 @@ public class UserController {
     )
     @PostMapping("/{id}/approve")
     public ResponseEntity<UserResponseDTO> approveUser(@PathVariable Long id) {
-        User approvedUser = userService.approveUser(id);
-        UserResponseDTO result = userResponseDTOMapper.toDTO(approvedUser);
+        UserResponseDTO result = userService.approveUser(id);
 
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
