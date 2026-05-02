@@ -49,6 +49,11 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage(), null);
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException exception) {
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, exception.getMessage(), null);
+    }
+
     private ResponseEntity<ErrorResponse> buildErrorResponse(HttpStatus status, String message, List<Map<String, String>> errors) {
         ErrorResponse body = new ErrorResponse(
                 status.value(),
