@@ -7,6 +7,7 @@ import com.example.generation.repositories.TransactionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -33,6 +34,10 @@ public class AccountService {
             return account.get();
         }
         else throw new EntityNotFoundException("Account with id: " + id + " not found");
+    }
+
+    public List<Account> findAccountsByUserId(Long userId) {
+        return accountRepository.findByUserId(userId);
     }
 
     public Account save(Account account) {
