@@ -68,7 +68,7 @@ public class TransactionService {
         validateAccountForTransfer(toAccount, "Receiver account");
 
         // transact() handles balance update and daily limit check
-        fromAccount.transact(dto.getAmount(), TransactionType.WITHDRAWAL);
+        fromAccount.transact(dto.getAmount(), TransactionType.TRANSFER);
         toAccount.transact(dto.getAmount(), TransactionType.DEPOSIT);
 
         accountRepository.save(fromAccount);

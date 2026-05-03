@@ -98,7 +98,7 @@ public class AccountController {
         return accountService.withdrawOrDeposit(id, transactionRequestDTOMapper.toEntity(transactionRequestDTO));
     }
 
-    @Operation(summary = "Get user account by IBAN")
+    @Operation(summary = "Get bank account by IBAN")
     @GetMapping
     public ResponseEntity<AccountResponseDTO> getAccountByIban(@RequestParam String iban) {
         AccountResponseDTO result = accountService.getAccountByIban(iban);
