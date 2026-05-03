@@ -3,6 +3,7 @@ package com.example.generation.dtos.RequestDTOs;
 import com.example.generation.framework.annotations.ValidBSN;
 import com.example.generation.framework.annotations.ValidBirthDate;
 import com.example.generation.framework.groups.OnCreate;
+import com.example.generation.framework.groups.OnTransaction;
 import com.example.generation.framework.groups.OnUpdate;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
@@ -14,24 +15,24 @@ import java.time.LocalDate;
 public class UserRequestDTO {
 
     @Null(groups = OnCreate.class, message = "ID must be null on creation")
-    @NotNull(groups = OnUpdate.class, message = "ID is required for updates")
+    @NotNull(groups = {OnUpdate.class, OnTransaction.class}, message = "ID is required for updates")
     private Long id;
 
     @Valid
     private AddressRequestDTO address;
 
-    @NotBlank
-    @Size(min = 1, max = 50)
-    @Pattern(regexp = "^[\\p{L}\\s\\-']+$", message = "Firstname contains invalid characters")
+    @NotBlank(groups = {OnCreate.class, OnUpdate.class})
+    @Size(min = 1, max = 50, groups = {OnCreate.class,  OnUpdate.class})
+    @Pattern(regexp = "^[\\p{L}\\s\\-']+$", message = "Firstname contains invalid characters", groups = {OnCreate.class, OnUpdate.class})
     private String firstName;
 
-    @NotBlank
-    @Size(min = 1, max = 100)
+    @NotBlank(groups = {OnCreate.class, OnUpdate.class})
+    @Size(min = 1, max = 100,  groups = {OnCreate.class,  OnUpdate.class})
     @Pattern(regexp = "^[\\p{L}\\s\\-']+$", message = "Lastname contains invalid characters")
     private String lastName;
 
-    @NotBlank
-    @Email(message = "Please provide a valid email address")
+    @NotBlank(groups = {OnCreate.class, OnUpdate.class})
+    @Email(message = "Please provide a valid email address", groups = {OnCreate.class, OnUpdate.class})
     private String email;
 
     @NotBlank(groups = { OnCreate.class, OnUpdate.class })

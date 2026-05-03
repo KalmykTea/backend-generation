@@ -1,7 +1,5 @@
 package com.example.generation.framework.annotations;
 
-import com.example.generation.framework.groups.OnCreate;
-import com.example.generation.framework.groups.OnUpdate;
 import com.example.generation.framework.validators.BSNValidator;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
