@@ -6,6 +6,7 @@ import com.example.generation.entities.Account;
 import com.example.generation.entities.Transaction;
 import com.example.generation.enums.AccountStatus;
 import com.example.generation.enums.AccountType;
+import com.example.generation.enums.TransactionType;
 import com.example.generation.mappers.ResponseDTOMappers.TransactionResponseDTOMapper;
 import com.example.generation.repositories.AccountRepository;
 import com.example.generation.repositories.TransactionRepository;
@@ -52,7 +53,7 @@ public class TransactionService {
                 .orElseThrow(() -> new EntityNotFoundException("Account not found"));
 
         return transactionRepository
-                .findByFromAccountIdOrToAccountId(accountId, accountId, pageable)
+                .findByAccountId(accountId, pageable)
                 .map(transactionResponseDTOMapper::toDTO);
     }
 
@@ -65,9 +66,13 @@ public class TransactionService {
         // Validation
         validateAccountForTransfer(fromAccount, "Sender account");
         validateAccountForTransfer(toAccount, "Receiver account");
-        validateTransferLimits(fromAccount, dto.getAmount());
 
-        applyTransfer(fromAccount, toAccount, dto.getAmount());
+        // transact() handles balance update and daily limit check
+        fromAccount.transact(dto.getAmount(), TransactionType.WITHDRAWAL);
+        toAccount.transact(dto.getAmount(), TransactionType.DEPOSIT);
+
+        accountRepository.save(fromAccount);
+        accountRepository.save(toAccount);
 
         Transaction saved = buildTransaction(fromAccount, toAccount, dto);
 
@@ -83,29 +88,6 @@ public class TransactionService {
         if (account.getAccountStatus() != AccountStatus.ACTIVE) {
             throw new IllegalArgumentException(accountName + " is not active");
         }
-        if (account.getAccountType() != AccountType.CURRENT) {
-            throw new IllegalArgumentException(accountName + " is not a current account");
-        }
-    }
-
-    private void validateTransferLimits(Account fromAccount, BigDecimal amount) {
-        // Check if there's enough balance for transaction
-        if (fromAccount.getBalance().subtract(amount).compareTo(fromAccount.getAbsoluteLimit()) < 0) {
-            throw new IllegalArgumentException("Insufficient balance");
-        }
-        // Check if daily limit is exceeded
-        if (fromAccount.getDailyTransfer().add(amount).compareTo(fromAccount.getDailyLimit()) > 0) {
-            throw new IllegalArgumentException("Daily limit exceeded");
-        }
-    }
-
-    private void applyTransfer(Account fromAccount, Account toAccount, BigDecimal amount) {
-        fromAccount.setBalance(fromAccount.getBalance().subtract(amount));
-        toAccount.setBalance(toAccount.getBalance().add(amount));
-        fromAccount.setDailyTransfer(fromAccount.getDailyTransfer().add(amount));
-
-        accountRepository.save(fromAccount);
-        accountRepository.save(toAccount);
     }
 
     private Transaction buildTransaction(Account fromAccount, Account toAccount, TransactionRequestDTO dto) {
