@@ -6,6 +6,7 @@ import com.example.generation.framework.groups.OnCreate;
 import com.example.generation.framework.groups.OnUpdate;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
@@ -14,14 +15,17 @@ import java.math.BigDecimal;
 @Data
 public class TransactionRequestDTO {
 
-    @Null(groups = OnCreate.class, message = "ID must be null on creation")
+    @Null
     private Long id;
 
-    @ValidIBAN(groups = {OnCreate.class, OnUpdate.class})
-    private String fromAccountIBAN;
+    @Valid
+    private AccountRequestDTO fromAccount;
 
-    @ValidIBAN(groups = {OnCreate.class, OnUpdate.class})
-    private String toAccountIBAN;
+    @Valid
+    private AccountRequestDTO toAccount;
+
+    @Valid
+    private UserRequestDTO initiatedBy;
 
     @NotNull
     @Positive

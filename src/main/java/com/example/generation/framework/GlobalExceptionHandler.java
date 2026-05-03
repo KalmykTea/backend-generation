@@ -1,23 +1,30 @@
 package com.example.generation.framework;
 
-import com.example.generation.framework.exceptions.EntityNotFoundException;
+import com.example.generation.framework.exceptions.DailyLimitReachedException;
+import com.example.generation.framework.exceptions.InsufficientBalanceException;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    private static final DateTimeFormatter FORMATTER =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        String name = ex.getName();
+        String type = ex.getRequiredType().getSimpleName();
+        return new ResponseEntity<>(new ErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(), name + " should be of type " + type , List.of()
+        ),  HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationError(MethodArgumentNotValidException ex) {
@@ -26,7 +33,9 @@ public class GlobalExceptionHandler {
                 .map(err -> Map.of("field", err.getField(), "message", err.getDefaultMessage()))
                 .toList();
 
-        return buildErrorResponse(HttpStatus.BAD_REQUEST, "Validation failed", fieldErrors);
+        return new ResponseEntity<>(new ErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(), "Validation Failed", fieldErrors
+        ),  HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -36,31 +45,37 @@ public class GlobalExceptionHandler {
                 .map(v -> Map.of("field", v.getPropertyPath().toString(), "message", v.getMessage()))
                 .toList();
 
-        return buildErrorResponse(HttpStatus.BAD_REQUEST, "Constraint violation", fieldErrors);
+        return new ResponseEntity<>(new ErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage(), fieldErrors
+        ),  HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(InsufficientBalanceException.class)
+    public ResponseEntity<ErrorResponse> handleInsufficientBalance(InsufficientBalanceException ex) {
+        return new ResponseEntity<>(new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(), ex.getMessage(), List.of()
+        ),  HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(DailyLimitReachedException.class)
+    public ResponseEntity<ErrorResponse> handleInsufficientBalance(DailyLimitReachedException ex) {
+        return new ResponseEntity<>(new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(), ex.getMessage(), List.of()
+        ),  HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotFound(EntityNotFoundException ex) {
+        return new ResponseEntity<>(new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(), ex.getMessage(), List.of()
+        ),  HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
-        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", null);
-    }
-
-    @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleNotFoundException(EntityNotFoundException exception) {
-        return buildErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage(), null);
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException exception) {
-        return buildErrorResponse(HttpStatus.BAD_REQUEST, exception.getMessage(), null);
-    }
-
-    private ResponseEntity<ErrorResponse> buildErrorResponse(HttpStatus status, String message, List<Map<String, String>> errors) {
-        ErrorResponse body = new ErrorResponse(
-                status.value(),
-                message,
-                LocalDateTime.now().format(FORMATTER),
-                errors
-        );
-        return new ResponseEntity<>(body, status);
+        ex.printStackTrace();
+        return new ResponseEntity<>(new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(), "Unexpected Server Error", List.of()
+        ),  HttpStatus.BAD_REQUEST);
     }
 }

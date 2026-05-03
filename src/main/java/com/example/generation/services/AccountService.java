@@ -6,7 +6,10 @@ import com.example.generation.entities.User;
 import com.example.generation.enums.AccountType;
 import com.example.generation.framework.exceptions.EntityNotFoundException;
 import com.example.generation.mappers.ResponseDTOMappers.AccountResponseDTOMapper;
+import com.example.generation.entities.Transaction;
 import com.example.generation.repositories.AccountRepository;
+import com.example.generation.repositories.TransactionRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,10 +19,16 @@ import java.util.Random;
 @Service
 public class AccountService {
     private final AccountRepository accountRepository;
+    private final TransactionRepository transactionRepository;
     private final AccountResponseDTOMapper accountResponseDTOMapper;
 
-    public AccountService (AccountRepository accountRepository, AccountResponseDTOMapper accountResponseDTOMapper) {
+    public AccountService (
+            AccountRepository accountRepository,
+            TransactionRepository transactionRepository,
+            AccountResponseDTOMapper accountResponseDTOMapper
+    ) {
         this.accountRepository = accountRepository;
+        this.transactionRepository = transactionRepository;
         this.accountResponseDTOMapper = accountResponseDTOMapper;
     }
 
@@ -28,16 +37,32 @@ public class AccountService {
         return accountRepository.findAll();
     }
 
-    public Optional<Account> findById(Long id) {
-        return accountRepository.findById(id);
+    public Account findById(Long id) {
+        Optional<Account> account = accountRepository.findById(Math.toIntExact(id));
+        if (account.isPresent()) {
+            return account.get();
+        }
+        else throw new EntityNotFoundException("Account with id: " + id + " not found");
     }
 
     public Account save(Account account) {
         return accountRepository.save(account);
     }
 
-    public Account update(Account account) {
-        return accountRepository.save(account);
+    public Account update(Account account, Long id) {
+        Account existing = this.findById(id);
+        if (account.getAbsoluteLimit()!= null) existing.setAbsoluteLimit(account.getAbsoluteLimit());
+        if (account.getDailyLimit()!= null) existing.setDailyLimit(account.getDailyLimit());
+        if (account.getAccountStatus()!= null) existing.setAccountStatus(account.getAccountStatus());
+        return accountRepository.save(existing);
+    }
+
+    public Account withdrawOrDeposit(Long id, Transaction transaction) {
+        Account account = this.findById(id);
+        account.transact(transaction.getAmount(), transaction.getTransactionType());
+        transactionRepository.save(transaction);
+        accountRepository.save(account);
+        return account;
     }
 
     public void deleteById(Long id) {
