@@ -1,5 +1,6 @@
 package com.example.generation.controllers;
 
+import com.example.generation.dtos.ResponseDTOs.AccountClosureResponse;
 import com.example.generation.dtos.ResponseDTOs.EmployeeAccountResponseDTO;
 import com.example.generation.services.AccountService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -7,10 +8,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -26,6 +26,7 @@ public class EmployeeAccountController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('EMPLOYEE')")
     @Operation(summary = "Get paginated list of all customer accounts", description = "Retrieve a paginated list of all customer accounts. Restricted to employees.")
     public Map<String, Object> getPaginatedAccounts(
             @RequestParam(defaultValue = "0") int page,
@@ -41,5 +42,11 @@ public class EmployeeAccountController {
                 "totalElements", accountPage.getTotalElements(),
                 "totalPages", accountPage.getTotalPages()
         );
+    }
+    @PatchMapping("/{accountId}/close")
+    @PreAuthorize("hasRole('EMPLOYEE')")
+    @Operation(summary = "Close a customer account", description = "Soft deactivates a customer account by setting its status to CLOSED. Restricted to employees.")
+    public ResponseEntity<AccountClosureResponse> closeAccount(@PathVariable Long accountId) {
+        return ResponseEntity.ok(accountService.closeAccount(accountId));
     }
 }

@@ -1,11 +1,15 @@
 package com.example.generation.services;
 
+import com.example.generation.dtos.ResponseDTOs.AccountClosureResponse;
 import com.example.generation.dtos.ResponseDTOs.EmployeeAccountResponseDTO;
 import com.example.generation.entities.Account;
 import com.example.generation.entities.User;
 import com.example.generation.enums.AccountStatus;
 import com.example.generation.enums.AccountType;
+import com.example.generation.framework.exceptions.AccountAlreadyClosedException;
+import com.example.generation.framework.exceptions.AccountBalanceNotEmptyException;
 import com.example.generation.repositories.AccountRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +24,7 @@ import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -86,5 +91,40 @@ class AccountServiceTest {
         assertNotNull(result);
         assertTrue(result.getContent().isEmpty());
         assertEquals(0, result.getTotalElements());
+    }
+
+    @Test
+    void closeAccount_WithZeroBalance_ShouldSucceed() {
+        testAccount.setBalance(BigDecimal.ZERO);
+        when(accountRepository.findById(1)).thenReturn(Optional.of(testAccount));
+
+        AccountClosureResponse response = accountService.closeAccount(1L);
+
+        assertEquals(AccountStatus.CLOSED, response.status());
+        assertNotNull(response.closedAt());
+        assertEquals("Account successfully closed.", response.message());
+    }
+
+    @Test
+    void closeAccount_WithNonZeroBalance_ShouldThrowException() {
+        testAccount.setBalance(new BigDecimal("10.00"));
+        when(accountRepository.findById(1)).thenReturn(Optional.of(testAccount));
+
+        assertThrows(AccountBalanceNotEmptyException.class, () -> accountService.closeAccount(1L));
+    }
+
+    @Test
+    void closeAccount_AlreadyClosed_ShouldThrowException() {
+        testAccount.setAccountStatus(AccountStatus.CLOSED);
+        when(accountRepository.findById(1)).thenReturn(Optional.of(testAccount));
+
+        assertThrows(AccountAlreadyClosedException.class, () -> accountService.closeAccount(1L));
+    }
+
+    @Test
+    void closeAccount_NonExistent_ShouldThrowException() {
+        when(accountRepository.findById(1)).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> accountService.closeAccount(1L));
     }
 }

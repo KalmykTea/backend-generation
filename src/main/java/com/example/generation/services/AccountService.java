@@ -1,8 +1,12 @@
 package com.example.generation.services;
 
+import com.example.generation.dtos.ResponseDTOs.AccountClosureResponse;
 import com.example.generation.dtos.ResponseDTOs.EmployeeAccountResponseDTO;
 import com.example.generation.entities.Account;
 import com.example.generation.entities.Transaction;
+import com.example.generation.enums.AccountStatus;
+import com.example.generation.framework.exceptions.AccountAlreadyClosedException;
+import com.example.generation.framework.exceptions.AccountBalanceNotEmptyException;
 import com.example.generation.repositories.AccountRepository;
 import com.example.generation.repositories.TransactionRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -10,6 +14,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -60,6 +66,33 @@ public class AccountService {
 
     public void deleteById(Integer id) {
         accountRepository.deleteById(id);
+    }
+
+    public AccountClosureResponse closeAccount(Long accountId) {
+        Account account = accountRepository.findById(Math.toIntExact(accountId))
+                .orElseThrow(() -> new EntityNotFoundException("Account with ID " + accountId + " not found."));
+
+        if (account.getAccountStatus() == AccountStatus.CLOSED) {
+            throw new AccountAlreadyClosedException("Account is already closed.");
+        }
+
+        if (account.getBalance().compareTo(BigDecimal.ZERO) != 0) {
+            // Requirement: Closing an account with a non-zero balance should either be blocked with a 400 error or flagged with a warning.
+            // Choice: Blocking with a 400 error to ensure all funds are settled before closure.
+            throw new AccountBalanceNotEmptyException("Account balance must be zero before closing.");
+        }
+
+        account.setAccountStatus(AccountStatus.CLOSED);
+        account.setClosedAt(LocalDateTime.now());
+        accountRepository.save(account);
+
+        return new AccountClosureResponse(
+                account.getId(),
+                account.getIban(),
+                account.getAccountStatus(),
+                account.getClosedAt(),
+                "Account successfully closed."
+        );
     }
 
     public Page<EmployeeAccountResponseDTO> getPaginatedAccounts(Pageable pageable) {

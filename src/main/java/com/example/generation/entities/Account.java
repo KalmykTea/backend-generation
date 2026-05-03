@@ -56,10 +56,16 @@ public class Account {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "closed_at")
+    private LocalDateTime closedAt;
+
     @Column(name = "last_transfer_date", nullable = false)
     private LocalDateTime lastTransferDate = LocalDateTime.now();
 
     public void transact(BigDecimal amount, TransactionType type){
+        if (this.accountStatus == AccountStatus.CLOSED) {
+            throw new IllegalStateException("Cannot perform transactions on a closed account");
+        }
         BigDecimal newBalance;
         LocalDateTime today = LocalDateTime.now();
         BigDecimal currentTransferTally = dailyTransfer.add(amount);
