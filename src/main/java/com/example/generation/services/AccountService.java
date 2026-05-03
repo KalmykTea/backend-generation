@@ -1,10 +1,13 @@
 package com.example.generation.services;
 
+import com.example.generation.dtos.ResponseDTOs.EmployeeAccountResponseDTO;
 import com.example.generation.entities.Account;
 import com.example.generation.entities.Transaction;
 import com.example.generation.repositories.AccountRepository;
 import com.example.generation.repositories.TransactionRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -57,5 +60,17 @@ public class AccountService {
 
     public void deleteById(Integer id) {
         accountRepository.deleteById(id);
+    }
+
+    public Page<EmployeeAccountResponseDTO> getPaginatedAccounts(Pageable pageable) {
+        return accountRepository.findAll(pageable)
+                .map(account -> new EmployeeAccountResponseDTO(
+                        account.getId(),
+                        account.getIban(),
+                        account.getUser().getFirstName() + " " + account.getUser().getLastName(),
+                        account.getAccountType(),
+                        account.getAccountStatus(),
+                        account.getBalance()
+                ));
     }
 }
