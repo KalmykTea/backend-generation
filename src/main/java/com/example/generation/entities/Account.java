@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
@@ -57,18 +58,18 @@ public class Account {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(name = "last_transfer_date", nullable = false)
-    private LocalDateTime lastTransferDate = LocalDateTime.now();
+    private LocalDate lastTransferDate = null;
 
     public void transact(BigDecimal amount, TransactionType type){
         BigDecimal newBalance;
-        LocalDateTime today = LocalDateTime.now();
-        BigDecimal currentTransferTally = dailyTransfer.add(amount);
+        LocalDate today = LocalDate.now();
 
         if (!today.equals(lastTransferDate)) {
             dailyTransfer = BigDecimal.ZERO;
             lastTransferDate = today;
         }
 
+        BigDecimal currentTransferTally = dailyTransfer.add(amount);
         if (type == TransactionType.DEPOSIT) {
                 newBalance = balance.add(amount);
         }
