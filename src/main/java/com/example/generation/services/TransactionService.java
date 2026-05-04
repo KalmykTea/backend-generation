@@ -9,6 +9,7 @@ import com.example.generation.repositories.TransactionRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -36,6 +37,7 @@ public class TransactionService {
         return transactionRepository.save(transaction);
     }
 
+    @Transactional
     public Transaction transferFunds(Long fromAccountId, Long toAccountId, BigDecimal amount, Long initiatedByUserId) {
 
         Account fromAccount = accountService.findById(fromAccountId);
@@ -63,6 +65,7 @@ public class TransactionService {
         transaction.setTransactionType(TransactionType.TRANSFER);
         transaction.setStatus(TransactionStatus.COMPLETED);
 
+        transaction.setId(null);
         return transactionRepository.save(transaction);
     }
 

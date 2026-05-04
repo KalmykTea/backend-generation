@@ -34,7 +34,7 @@ public class TransactionController {
 
     // controller methods based on user stories with swagger doc code go here
     @PostMapping("")
-    @Operation(summary = "Transfer funds", description = "Transfers funds between two accounts of the same user")
+    @Operation(summary = "Transfer funds", description = "Transfers funds between two accounts")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
