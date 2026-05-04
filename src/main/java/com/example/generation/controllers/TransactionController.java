@@ -1,16 +1,29 @@
 package com.example.generation.controllers;
 
+import com.example.generation.dtos.RequestDTOs.TransactionRequestDTO;
+import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
+import com.example.generation.entities.Transaction;
+import com.example.generation.mappers.ResponseDTOMappers.TransactionResponseDTOMapper;
 import com.example.generation.services.TransactionService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Transactions", description = "Operations for managing transactions")
 @RestController
 @RequestMapping("transactions")
 public class TransactionController {
     final private TransactionService transactionService;
-    final private TransactionResponseDTOMapper  transactionResponseDTOMapper;
+    private TransactionResponseDTOMapper transactionResponseDTOMapper;
 
     public TransactionController(TransactionService transactionService) {
         this.transactionService = transactionService;
@@ -40,7 +53,7 @@ public class TransactionController {
     public ResponseEntity<TransactionResponseDTO> transfer(
             @RequestBody TransactionRequestDTO transactionRequestDTO
     ) {
-        TransactionResponseDTO result = transactionService.transferFunds(transactionRequestDTO);
+        TransactionResponseDTO result = transactionService.createTransaction(transactionRequestDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
@@ -63,5 +76,13 @@ public class TransactionController {
     ) {
         Page<Transaction> transactions = transactionService.findTransactionsByUserId(userId, pageable);
         return transactions.map(transactionResponseDTOMapper::toDTO);
+    }
+
+    @Operation(summary = "Get transactions per account")
+    @GetMapping("/{id}/transactions")
+    public ResponseEntity<Page<TransactionResponseDTO>> getTransactionsByAccountId(@PathVariable Long id, Pageable pageable) {
+        Page<TransactionResponseDTO> result = transactionService.getTransactionsByAccountId(id, pageable);
+
+        return new ResponseEntity<Page<TransactionResponseDTO>>(result, HttpStatus.OK);
     }
 }

@@ -79,6 +79,17 @@ public class AccountService {
         return accountResponseDTOMapper.toDTO(account);
     }
 
+//    public AccountResponseDTO getAccountByIban(String iban, AccountStatus status = null) {
+//        Account account = accountRepository.findByIban(iban)
+//                .orElseThrow(() -> new EntityNotFoundException("Account not found"));
+    // if (!status) {
+    //check if it equals status
+    //return it if it does
+    // }
+//
+//        return accountResponseDTOMapper.toDTO(account);
+//    }
+
     public List<String> getIbansByUserName(String firstName, String lastName) {
         return accountRepository
                 .findByUserFirstNameAndUserLastName(firstName, lastName)
