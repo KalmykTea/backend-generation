@@ -2,6 +2,7 @@ package com.example.generation.controllers;
 
 import com.example.generation.dtos.RequestDTOs.AccountRequestDTO;
 import com.example.generation.dtos.RequestDTOs.TransactionRequestDTO;
+import com.example.generation.dtos.ResponseDTOs.EmployeeAccountResponseDTO;
 import com.example.generation.entities.Account;
 import com.example.generation.framework.groups.OnTransaction;
 import com.example.generation.framework.groups.OnUpdate;
@@ -16,8 +17,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.groups.Default;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @Tag(name = "Accounts", description = "Operations for managing accounts")
 @RestController
@@ -35,6 +41,26 @@ public class AccountController {
         this.accountService = accountService;
         this.accountRequestDTOMapper = accountRequestDTOMapper;
         this.transactionRequestDTOMapper = transactionRequestDTOMapper;
+    }
+
+    //view all customer accounts
+
+    @GetMapping
+    @Operation(summary = "Get paginated list of all customer accounts", description = "Retrieve a paginated list of all customer accounts. Restricted to employees.")
+    public Map<String, Object> getPaginatedAccounts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<EmployeeAccountResponseDTO> accountPage = accountService.getPaginatedAccounts(pageable);
+
+        return Map.of(
+                "content", accountPage.getContent(),
+                "page", accountPage.getNumber(),
+                "size", accountPage.getSize(),
+                "totalElements", accountPage.getTotalElements(),
+                "totalPages", accountPage.getTotalPages()
+        );
     }
 
     // controller methods based on user stories with swagger doc code go here
