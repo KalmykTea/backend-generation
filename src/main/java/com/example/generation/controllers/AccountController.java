@@ -2,13 +2,11 @@ package com.example.generation.controllers;
 
 import com.example.generation.dtos.RequestDTOs.AccountRequestDTO;
 import com.example.generation.dtos.RequestDTOs.TransactionRequestDTO;
-import com.example.generation.dtos.ResponseDTOs.AccountResponseDTO;
 import com.example.generation.entities.Account;
 import com.example.generation.framework.groups.OnTransaction;
 import com.example.generation.framework.groups.OnUpdate;
 import com.example.generation.mappers.RequestDTOMappers.AccountRequestDTOMapper;
 import com.example.generation.mappers.RequestDTOMappers.TransactionRequestDTOMapper;
-import com.example.generation.mappers.ResponseDTOMappers.AccountResponseDTOMapper;
 import com.example.generation.services.AccountService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -21,27 +19,21 @@ import jakarta.validation.groups.Default;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @Tag(name = "Accounts", description = "Operations for managing accounts")
 @RestController
 @RequestMapping("accounts")
 public class AccountController {
     final private AccountService accountService;
     final private AccountRequestDTOMapper accountRequestDTOMapper;
-    final private AccountResponseDTOMapper accountResponseDTOMapper;
     private final TransactionRequestDTOMapper transactionRequestDTOMapper;
 
     public AccountController(
             AccountService accountService,
             AccountRequestDTOMapper accountRequestDTOMapper,
-            AccountResponseDTOMapper accountResponseDTOMapper,
             TransactionRequestDTOMapper transactionRequestDTOMapper
-
     ) {
         this.accountService = accountService;
         this.accountRequestDTOMapper = accountRequestDTOMapper;
-        this.accountResponseDTOMapper = accountResponseDTOMapper;
         this.transactionRequestDTOMapper = transactionRequestDTOMapper;
     }
 
@@ -115,5 +107,29 @@ public class AccountController {
         return accounts.stream()
                 .map(accountResponseDTOMapper::toDTO)
                 .toList();
+    }
+
+    @Operation(summary = "Get bank account by IBAN")
+    @GetMapping
+    public ResponseEntity<AccountResponseDTO> getAccountByIban(@RequestParam String iban) {
+        AccountResponseDTO result = accountService.getAccountByIban(iban);
+
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
+    @Operation(summary = "Find user IBAN by first and last name")
+    @GetMapping("/search")
+    public ResponseEntity<List<String>> getIbanByName(@RequestParam String firstName, @RequestParam String lastName) {
+        List<String> ibans = accountService.getIbansByUserName(firstName, lastName);
+
+        return new ResponseEntity<>(ibans, HttpStatus.OK);
+    }
+
+    @Operation(summary = "Get transactions per account")
+    @GetMapping("/{id}/transactions")
+    public ResponseEntity<Page<TransactionResponseDTO>> getTransactionsByAccountId(@PathVariable Long id, Pageable pageable) {
+        Page<TransactionResponseDTO> result = transactionService.getTransactionsByAccountId(id, pageable);
+
+        return new ResponseEntity<Page<TransactionResponseDTO>>(result, HttpStatus.OK);
     }
 }

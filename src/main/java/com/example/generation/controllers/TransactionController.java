@@ -1,24 +1,9 @@
 package com.example.generation.controllers;
 
-import com.example.generation.dtos.RequestDTOs.TransactionRequestDTO;
-import com.example.generation.dtos.ResponseDTOs.AccountResponseDTO;
-import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
-import com.example.generation.entities.Account;
-import com.example.generation.entities.Transaction;
-import com.example.generation.mappers.ResponseDTOMappers.TransactionResponseDTOMapper;
 import com.example.generation.services.TransactionService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Transactions", description = "Operations for managing transactions")
 @RestController
@@ -27,7 +12,7 @@ public class TransactionController {
     final private TransactionService transactionService;
     final private TransactionResponseDTOMapper  transactionResponseDTOMapper;
 
-    public TransactionController(TransactionService transactionService, TransactionResponseDTOMapper transactionResponseDTOMapper) {
+    public TransactionController(TransactionService transactionService) {
         this.transactionService = transactionService;
         this.transactionResponseDTOMapper = transactionResponseDTOMapper;
     }
@@ -52,16 +37,11 @@ public class TransactionController {
                     content = @Content
             )
     })
-    public TransactionResponseDTO transfer(
+    public ResponseEntity<TransactionResponseDTO> transfer(
             @RequestBody TransactionRequestDTO transactionRequestDTO
     ) {
-        Transaction transaction = transactionService.transferFunds(
-                transactionRequestDTO.getFromAccount().getId(),
-                transactionRequestDTO.getToAccount().getId(),
-                transactionRequestDTO.getAmount(),
-                transactionRequestDTO.getInitiatedBy().getId()
-        );
-        return transactionResponseDTOMapper.toDTO(transaction);
+        TransactionResponseDTO result = transactionService.transferFunds(transactionRequestDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
     @GetMapping("")

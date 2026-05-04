@@ -1,10 +1,7 @@
 package com.example.generation.services;
 
-import com.example.generation.entities.Account;
 import com.example.generation.entities.Transaction;
 import com.example.generation.enums.AccountType;
-import com.example.generation.enums.TransactionStatus;
-import com.example.generation.enums.TransactionType;
 import com.example.generation.repositories.TransactionRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,11 +14,9 @@ import java.util.Optional;
 @Service
 public class TransactionService {
     private final TransactionRepository transactionRepository;
-    private final AccountService accountService;
 
-    public TransactionService(TransactionRepository transactionRepository, AccountService accountService) {
+    public TransactionService(TransactionRepository transactionRepository) {
         this.transactionRepository = transactionRepository;
-        this.accountService = accountService;
     }
 
     // basic stuff, input custom logic according to your user stories
@@ -29,7 +24,7 @@ public class TransactionService {
         return transactionRepository.findAll();
     }
 
-    public Optional<Transaction> findById(Integer id){
+    public Optional<Transaction> findById(Long id){
         return transactionRepository.findById(id);
     }
 
@@ -37,11 +32,24 @@ public class TransactionService {
         return transactionRepository.save(transaction);
     }
 
-    @Transactional
-    public Transaction transferFunds(Long fromAccountId, Long toAccountId, BigDecimal amount, Long initiatedByUserId) {
+    public Page<TransactionResponseDTO> getTransactionsByAccountId(Long accountId, Pageable pageable) {
+        accountRepository.findById(accountId)
+                .orElseThrow(() -> new EntityNotFoundException("Account not found"));
 
-        Account fromAccount = accountService.findById(fromAccountId);
-        Account toAccount = accountService.findById(toAccountId);
+        return transactionRepository
+                .findByAccountId(accountId, pageable)
+                .map(transactionResponseDTOMapper::toDTO);
+    }
+
+    // All steps must succeed together — if anything fails, all changes rolled back
+    @Transactional
+    public TransactionResponseDTO createTransaction(TransactionRequestDTO dto) {
+        Account fromAccount = getAccountByIbanOrThrow(dto.getFromAccount().getIban());
+        Account toAccount = getAccountByIbanOrThrow(dto.getToAccount().getIban());
+
+        // Validation
+        validateAccountForTransfer(fromAccount, "Sender account");
+        validateAccountForTransfer(toAccount, "Receiver account");
 
         if (!fromAccount.getUser().getId().equals(toAccount.getUser().getId())) {
             if(fromAccount.getAccountType() != AccountType.CURRENT || toAccount.getAccountType() != AccountType.CURRENT)
@@ -50,23 +58,43 @@ public class TransactionService {
             }
         }
 
-        fromAccount.transact(amount, TransactionType.WITHDRAWAL);
-        toAccount.transact(amount, TransactionType.DEPOSIT);
+        // transact() handles balance update and daily limit check
+        fromAccount.transact(dto.getAmount(), TransactionType.TRANSFER);
+        toAccount.transact(dto.getAmount(), TransactionType.DEPOSIT);
 
-        accountService.save(fromAccount);
-        accountService.save(toAccount);
+        accountRepository.save(fromAccount);
+        accountRepository.save(toAccount);
 
-        //**need to refactor this**
+        Transaction savedTransaction = buildTransaction(fromAccount, toAccount, dto);
+
+        savedTransaction.setId(null);
+        transactionRepository.save(savedTransaction);
+
+        return transactionResponseDTOMapper.toDTO(savedTransaction);
+    }
+
+    private Account getAccountByIbanOrThrow(String iban) {
+        return accountRepository.findByIban(iban)
+                .orElseThrow(() -> new EntityNotFoundException("Account with IBAN " + iban + " not found"));
+    }
+
+    private void validateAccountForTransfer(Account account, String accountName) {
+        if (account.getAccountStatus() != AccountStatus.ACTIVE) {
+            throw new IllegalArgumentException(accountName + " is not active");
+        }
+    }
+
+    private Transaction buildTransaction(Account fromAccount, Account toAccount, TransactionRequestDTO dto) {
         Transaction transaction = new Transaction();
         transaction.setFromAccount(fromAccount);
         transaction.setToAccount(toAccount);
+        transaction.setAmount(dto.getAmount());
+        transaction.setDescription(dto.getDescription());
+        transaction.setTransactionType(dto.getTransactionType());
+        // Temporary - use sender as initiator
         transaction.setInitiatedBy(fromAccount.getUser());
-        transaction.setAmount(amount);
-        transaction.setTransactionType(TransactionType.TRANSFER);
-        transaction.setStatus(TransactionStatus.COMPLETED);
 
-        transaction.setId(null);
-        return transactionRepository.save(transaction);
+        return transaction;
     }
 
     public Page<Transaction> findTransactionsByUserId(Long userId, Pageable pageable) {
