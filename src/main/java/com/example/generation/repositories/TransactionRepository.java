@@ -13,6 +13,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     @Query("SELECT t FROM Transaction t WHERE t.fromAccount.user.id = :userId OR t.toAccount.user.id = :userId")
     Page<Transaction> findTransactionsByUserId(@Param("userId") Long userId, Pageable pageable);
 
-    @Query("SELECT t FROM Transaction t WHERE t.fromAccount.id = :id OR t.toAccount.id = :id")
-    Page<Transaction> findByAccountId(@Param("id") Long accountId, Pageable pageable);
+    @Query("SELECT t FROM Transaction t WHERE t.fromAccount.iban = :iban OR t.toAccount.iban = :iban")
+    Page<Transaction> findByAccountIBAN(@Param("iban") String accountIBAN, Pageable pageable);
 }

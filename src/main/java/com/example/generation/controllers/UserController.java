@@ -1,5 +1,6 @@
 package com.example.generation.controllers;
 
+import com.example.generation.dtos.ResponseDTOs.UserFullResponseDTO;
 import com.example.generation.dtos.ResponseDTOs.UserResponseDTO;
 import com.example.generation.services.AddressService;
 import com.example.generation.services.UserService;
@@ -27,8 +28,8 @@ public class UserController {
 
     @Operation(summary = "Get list of customers pending approval")
     @GetMapping("/pending")
-    public ResponseEntity<List<UserResponseDTO>> getPendingUsers() {
-        List<UserResponseDTO> result = userService.getPendingUsers();
+    public ResponseEntity<List<UserFullResponseDTO>> getPendingUsers() {
+        List<UserFullResponseDTO> result = userService.getPendingUsers();
 
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
@@ -38,8 +39,8 @@ public class UserController {
             description = "Approves a user with Pending status. Creates a Current and Savings account with a unique IBAN"
     )
     @PostMapping("/{id}/approve")
-    public ResponseEntity<UserResponseDTO> approveUser(@PathVariable Long id) {
-        UserResponseDTO result = userService.approveUser(id);
+    public ResponseEntity<UserFullResponseDTO> approveUser(@PathVariable Long id) {
+        UserFullResponseDTO result = userService.approveUser(id);
 
         return new ResponseEntity<>(result, HttpStatus.OK);
     }

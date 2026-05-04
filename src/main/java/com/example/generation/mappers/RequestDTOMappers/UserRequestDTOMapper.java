@@ -6,18 +6,11 @@ import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring", uses = {AddressRequestDTOMapper.class})
+@Mapper(componentModel = "spring")
 public interface UserRequestDTOMapper {
     @BeanMapping(ignoreByDefault = true)
     @Mapping(source = "id", target = "id")
     @Mapping(source = "firstName", target = "firstName")
     @Mapping(source = "lastName", target = "lastName")
-    @Mapping(source = "email", target = "email")
-    @Mapping(source = "password", target = "password")
-    @Mapping(source = "bsnNumber", target = "bsnNumber")
-    @Mapping(source = "birthdate", target = "birthdate")
-    @Mapping(source = "phoneNumber", target = "phoneNumber")
-    @Mapping(source = "address", target = "address")
-    User toEntity(UserRequestDTO userRequestDTO);
     UserRequestDTO toDTO(User user);
 }

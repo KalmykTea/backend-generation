@@ -1,9 +1,10 @@
 package com.example.generation.services;
 
+import com.example.generation.dtos.ResponseDTOs.UserFullResponseDTO;
 import com.example.generation.dtos.ResponseDTOs.UserResponseDTO;
 import com.example.generation.entities.User;
 import com.example.generation.enums.UserStatus;
-import com.example.generation.mappers.ResponseDTOMappers.UserResponseDTOMapper;
+import com.example.generation.mappers.ResponseDTOMappers.UserFullResponseDTOMapper;
 import com.example.generation.repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
@@ -15,16 +16,16 @@ import java.util.Optional;
 public class UserService {
     private final UserRepository userRepository;
     private final AccountService accountService;
-    private final UserResponseDTOMapper userResponseDTOMapper;
+    private final UserFullResponseDTOMapper userFullResponseDTOMapper;
 
     public UserService(
             UserRepository userRepository,
             AccountService accountService,
-            UserResponseDTOMapper userResponseDTOMapper
+            UserFullResponseDTOMapper userFullResponseDTOMapper
     ){
         this.userRepository = userRepository;
         this.accountService = accountService;
-        this.userResponseDTOMapper = userResponseDTOMapper;
+        this.userFullResponseDTOMapper = userFullResponseDTOMapper;
     }
 
     // basic stuff, input custom logic according to your user stories
@@ -48,7 +49,7 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
-    public UserResponseDTO approveUser(Long id) {
+    public UserFullResponseDTO approveUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
@@ -62,13 +63,13 @@ public class UserService {
         User savedUser = userRepository.save(user);
         accountService.createAccountsForUser(user);
 
-        return userResponseDTOMapper.toDTO(savedUser);
+        return userFullResponseDTOMapper.toDTO(savedUser);
     }
 
-    public List<UserResponseDTO> getPendingUsers() {
+    public List<UserFullResponseDTO> getPendingUsers() {
         return userRepository.findByUserStatus(UserStatus.PENDING)
                 .stream()
-                .map(userResponseDTOMapper::toDTO)
+                .map(userFullResponseDTOMapper::toDTO)
                 .toList();
     }
 }

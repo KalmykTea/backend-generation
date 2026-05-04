@@ -22,17 +22,13 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "account")
 public class Account {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(unique = true, nullable = false)
+    private String iban;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
-
-    @Column(unique = true, nullable = false)
-    private String iban;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "account_type", nullable = false)
