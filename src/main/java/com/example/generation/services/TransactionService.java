@@ -1,22 +1,35 @@
 package com.example.generation.services;
 
+import com.example.generation.dtos.RequestDTOs.TransactionRequestDTO;
+import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
+import com.example.generation.entities.Account;
 import com.example.generation.entities.Transaction;
+import com.example.generation.enums.AccountStatus;
 import com.example.generation.enums.AccountType;
+import com.example.generation.enums.TransactionType;
+import com.example.generation.mappers.ResponseDTOMappers.TransactionResponseDTOMapper;
+import com.example.generation.repositories.AccountRepository;
 import com.example.generation.repositories.TransactionRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.Optional;
 
 @Service
 public class TransactionService {
     private final TransactionRepository transactionRepository;
+    private final AccountRepository accountRepository;
+    private final TransactionResponseDTOMapper transactionResponseDTOMapper;
 
-    public TransactionService(TransactionRepository transactionRepository) {
+    public TransactionService(TransactionRepository transactionRepository,
+                              AccountRepository accountRepository,
+                              TransactionResponseDTOMapper transactionResponseDTOMapper) {
         this.transactionRepository = transactionRepository;
+        this.accountRepository = accountRepository;
+        this.transactionResponseDTOMapper = transactionResponseDTOMapper;
     }
 
     // basic stuff, input custom logic according to your user stories
@@ -52,9 +65,9 @@ public class TransactionService {
         validateAccountForTransfer(toAccount, "Receiver account");
 
         if (!fromAccount.getUser().getId().equals(toAccount.getUser().getId())) {
-            if(fromAccount.getAccountType() != AccountType.CURRENT || toAccount.getAccountType() != AccountType.CURRENT)
+            if(fromAccount.getAccountType() != AccountType.CHECKING || toAccount.getAccountType() != AccountType.CHECKING)
             {
-                throw new IllegalArgumentException("Both accounts need to be from type current");
+                throw new IllegalArgumentException("Both accounts need to be from type checking");
             }
         }
 
