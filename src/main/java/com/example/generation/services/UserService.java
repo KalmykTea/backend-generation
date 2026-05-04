@@ -32,7 +32,7 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    public Optional<User> findById(int id){
+    public Optional<User> findById(long id){
         return userRepository.findById(id);
     }
 
@@ -44,7 +44,7 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public void deleteById(int id){
+    public void deleteById(long id){
         userRepository.deleteById(id);
     }
 

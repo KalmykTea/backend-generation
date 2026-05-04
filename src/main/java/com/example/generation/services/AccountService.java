@@ -37,7 +37,7 @@ public class AccountService {
     }
 
     public Account findById(Long id) {
-        Optional<Account> account = accountRepository.findById(Math.toIntExact(id));
+        Optional<Account> account = accountRepository.findById((long)Math.toIntExact(id));
         if (account.isPresent()) {
             return account.get();
         }
@@ -64,7 +64,7 @@ public class AccountService {
         return account;
     }
 
-    public void deleteById(Integer id) {
+    public void deleteById(Long id) {
         accountRepository.deleteById(id);
     }
 
@@ -87,7 +87,7 @@ public class AccountService {
         Account current = new Account();
         current.setUser(user);
         current.setIban(generateUniqueIban());
-        current.setAccountType(AccountType.CURRENT);
+        current.setAccountType(AccountType.CHECKING);
         accountRepository.save(current);
 
         Account savings = new Account();
