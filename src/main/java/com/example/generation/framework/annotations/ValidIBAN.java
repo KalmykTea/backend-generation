@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Pattern;
 import java.lang.annotation.*;
 
 @NotBlank
-@Pattern(regexp = "NL[A-Za-z][A-Za-z]INHO0[A-Za-z][A-Za-z][A-Za-z][A-Za-z][A-Za-z][A-Za-z][A-Za-z][A-Za-z][A-Za-z]")
+@Pattern(regexp = "NL\\d{2}INHO0\\d{9}")
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
