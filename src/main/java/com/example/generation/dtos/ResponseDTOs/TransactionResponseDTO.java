@@ -1,6 +1,5 @@
 package com.example.generation.dtos.ResponseDTOs;
 
-import com.example.generation.dtos.RequestDTOs.UserRequestDTO;
 import com.example.generation.enums.TransactionType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
