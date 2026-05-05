@@ -40,8 +40,8 @@ public class AccountController {
     }
 
     // controller methods based on user stories with swagger doc code go here
-    @PatchMapping("")
-    @Operation(summary = "Update an account", description = "Updates an existing account for the given id using the provided payload.")
+    @PatchMapping("/{iban}")
+    @Operation(summary = "Update an account", description = "Updates an existing account for the given IBAN using the provided payload.")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
@@ -56,14 +56,16 @@ public class AccountController {
 
     })
     public AccountFullResponseDTO update(
+            @Parameter(description = "IBAN of the account to update")
+            @PathVariable String iban,
             @Parameter(description = "Account payload used to update an existing account")
             @Validated({OnUpdate.class})
             @RequestBody
-            AccountFullRequestDTO accountFullRequestDTO,
-            @RequestParam String iban
+            AccountFullRequestDTO accountFullRequestDTO
     ) {
-            Account account = accountService.update(accountRequestDTOMapper.toEntity(accountFullRequestDTO));
-            return accountFullResponseDTOMapper.toDTO(account);
+            Account account = accountRequestDTOMapper.toEntity(accountFullRequestDTO);
+            account.setIban(iban);
+            return accountFullResponseDTOMapper.toDTO(accountService.update(account));
     }
 
     @GetMapping("")
