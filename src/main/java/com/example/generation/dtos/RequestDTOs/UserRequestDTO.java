@@ -17,6 +17,6 @@ public class UserRequestDTO {
     private String firstName;
     @NotBlank
     @Size(min = 1, max = 50)
-    @Pattern(regexp = "^[\\p{L}\\s\\-']+$", message = "Firstname contains invalid characters")
+    @Pattern(regexp = "^[\\p{L}\\s\\-']+$", message = "Lastname contains invalid characters")
     private String lastName;
 }
