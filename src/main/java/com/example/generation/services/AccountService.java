@@ -1,5 +1,6 @@
 package com.example.generation.services;
 
+import com.example.generation.dtos.RequestDTOs.AccountFullRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.AccountFullResponseDTO;
 import com.example.generation.entities.Account;
 import com.example.generation.entities.User;
@@ -33,11 +34,11 @@ public class AccountService {
         return accountRepository.findByUserId(userId);
     }
 
-    public Account update(Account account) {
-        Account existing = this.getAccountByIbanOrThrow(account.getIban());
-        existing.setDailyLimit(account.getDailyLimit());
-        existing.setAbsoluteLimit(account.getAbsoluteLimit());
-        return accountRepository.save(existing);
+    public AccountFullResponseDTO update(AccountFullRequestDTO accountFullRequestDTO, String iban) {
+        Account existing = this.getAccountByIbanOrThrow(iban);
+        existing.setDailyLimit(accountFullRequestDTO.getDailyLimit());
+        existing.setAbsoluteLimit(accountFullRequestDTO.getAbsoluteLimit());
+        return accountFullResponseDTOMapper.toDTO(accountRepository.save(existing));
     }
 
     public void save(Account account) {

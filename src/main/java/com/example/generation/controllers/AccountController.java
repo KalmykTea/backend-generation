@@ -3,6 +3,7 @@ package com.example.generation.controllers;
 import com.example.generation.dtos.RequestDTOs.AccountFullRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.AccountFullResponseDTO;
 import com.example.generation.entities.Account;
+import com.example.generation.framework.annotations.ValidIBAN;
 import com.example.generation.framework.groups.OnUpdate;
 import com.example.generation.mappers.RequestDTOMappers.AccountFullRequestDTOMapper;
 import com.example.generation.mappers.ResponseDTOMappers.AccountFullResponseDTOMapper;
@@ -63,9 +64,7 @@ public class AccountController {
             @RequestBody
             AccountFullRequestDTO accountFullRequestDTO
     ) {
-            Account account = accountRequestDTOMapper.toEntity(accountFullRequestDTO);
-            account.setIban(iban);
-            return accountFullResponseDTOMapper.toDTO(accountService.update(account));
+            return accountService.update(accountFullRequestDTO, iban);
     }
 
     @GetMapping("")
