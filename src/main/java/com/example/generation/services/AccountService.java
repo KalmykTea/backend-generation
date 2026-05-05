@@ -49,8 +49,8 @@ public class AccountService {
                 .orElseThrow(() -> new EntityNotFoundException("Account with IBAN " + iban + " not found"));
     }
 
-    public void deleteById(Long id) {
-        accountRepository.deleteById(id);
+    public void deleteByIban(String iban) {
+        accountRepository.deleteById(iban);
     }
 
     public AccountFullResponseDTO getAccountByIban(String iban) {
