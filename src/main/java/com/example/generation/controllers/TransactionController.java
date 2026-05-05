@@ -32,176 +32,236 @@ public class TransactionController {
         this.transactionResponseDTOMapper = transactionResponseDTOMapper;
     }
 
-    @PostMapping("")
-    @Operation(summary = "Make a transaction", description = "Transfer, withdraw or deposit money")
+    @PostMapping("/transfer")
+    @Operation(summary = "Transfer money", description = "Transfer funds to another account")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Transaction completed successfully",
+                    description = "Transfer completed successfully",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = TransactionResponseDTO.class),
-                            examples = {
-                                    @ExampleObject(
-                                            name = "Transfer request",
-                                            value = """
-                                        {
-                                          "id": 1,
-                                          "fromAccount": {
-                                            "iban": "NL13INHO0162593609",
-                                            "userId": 2,
-                                            "accountType": "CHECKING"
-                                          },
-                                          "toAccount": {
-                                            "iban": "NL18INHO0398474392",
-                                            "userId": 4,
-                                            "accountType": "CHECKING"
-                                          },
-                                          "initiatedBy": {
-                                            "id": 2,
-                                            "firstName": "Jan",
-                                            "lastName": "Jansen"
-                                          },
-                                          "amount": 250.00,
-                                          "description": "Gift money :)",
-                                          "transactionType": "TRANSFER"
-                                        }
-                                        """
-                                    ),
-                                    @ExampleObject(
-                                            name = "Withdraw request",
-                                            value = """
-                                        {
-                                          "id": 1,
-                                          "fromAccount": {
-                                            "iban": "NL13INHO0162593609",
-                                            "userId": 2,
-                                            "accountType": "CHECKING"
-                                          },
-                                          "toAccount": null,
-                                          "initiatedBy": {
-                                            "id": 2,
-                                            "firstName": "Jan",
-                                            "lastName": "Jansen"
-                                          },
-                                          "amount": 250.00,
-                                          "description": "ATM withdrawal",
-                                          "transactionType": "WITHDRAWAL"
-                                        }
-                                        """
-                                    ),
-                                    @ExampleObject(
-                                            name = "Deposit request",
-                                            value = """
-                                        {
-                                          "id": 1,
-                                          "fromAccount": {
-                                            "iban": "NL13INHO0162593609",
-                                            "userId": 2,
-                                            "accountType": "CHECKING"
-                                          },
-                                          "toAccount": null,
-                                          "initiatedBy": {
-                                            "id": 2,
-                                            "firstName": "Jan",
-                                            "lastName": "Jansen"
-                                          },
-                                          "amount": 250.00,
-                                          "description": "ATM deposit",
-                                          "transactionType": "DEPOSIT"
-                                        }
-                                        """
-                                    )
-                            }
+                            examples = @ExampleObject(
+                                    name = "Transfer response",
+                                    value = """
+                                {
+                                  "id": 1,
+                                  "fromAccount": {
+                                    "iban": "NL13INHO0162593609",
+                                    "userId": 2,
+                                    "accountType": "CHECKING"
+                                  },
+                                  "toAccount": {
+                                    "iban": "NL18INHO0398474392",
+                                    "userId": 4,
+                                    "accountType": "CHECKING"
+                                  },
+                                  "initiatedBy": {
+                                    "id": 2,
+                                    "firstName": "Jan",
+                                    "lastName": "Jansen"
+                                  },
+                                  "amount": 250.00,
+                                  "description": "Gift money :)",
+                                  "transactionType": "TRANSFER"
+                                }
+                                """
+                            )
                     )
             ),
             @ApiResponse(responseCode = "400", description = "Insufficient balance or daily limit reached", content = @Content),
             @ApiResponse(responseCode = "404", description = "Account not found", content = @Content)
     })
     public TransactionResponseDTO transfer(
-            @RequestParam("type") TransactionType type,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = TransactionRequestDTO.class),
-                            examples = {
-                                    @ExampleObject(
-                                            name = "Transfer request",
-                                            value = """
-                                        {
-                                          "id" : null,
-                                          "fromAccount": {
-                                            "iban": "NL13INHO0162593609",
-                                            "userId": 2,
-                                            "accountType": "CHECKING"
-                                          },
-                                          "toAccount": {
-                                            "iban": "NL18INHO0398474392",
-                                            "userId": 4,
-                                            "accountType": "CHECKING"
-                                          },
-                                          "initiatedBy": {
-                                            "id": 2,
-                                            "firstName": "Jan",
-                                            "lastName": "Jansen"
-                                          },
-                                          "amount": 250.00,
-                                          "description": "Gift money :)",
-                                          "transactionType": "TRANSFER"
-                                        }
-                                        """
-                                    ),
-                                    @ExampleObject(
-                                            name = "Withdraw request",
-                                            value = """
-                                        {
-                                          "id" : null,
-                                          "fromAccount": {
-                                            "iban": "NL13INHO0162593609",
-                                            "userId": 2,
-                                            "accountType": "CHECKING"
-                                          },
-                                          "toAccount": null,
-                                          "initiatedBy": {
-                                            "id": 2,
-                                            "firstName": "Jan",
-                                            "lastName": "Jansen"
-                                          },
-                                          "amount": 250.00,
-                                          "description": "ATM withdrawal",
-                                          "transactionType": "WITHDRAWAL"
-                                        }
-                                        """
-                                    ),
-                                    @ExampleObject(
-                                            name = "Deposit request",
-                                            value = """
-                                        {
-                                          "id": null,
-                                          "fromAccount": {
-                                            "iban": "NL13INHO0162593609",
-                                            "userId": 2,
-                                            "accountType": "CHECKING"
-                                          },
-                                          "toAccount": null,
-                                          "initiatedBy": {
-                                            "id": 2,
-                                            "firstName": "Jan",
-                                            "lastName": "Jansen"
-                                          },
-                                          "amount": 250.00,
-                                          "description": "ATM deposit",
-                                          "transactionType": "DEPOSIT"
-                                        }
-                                        """
-                                    )
-                            }
+                            examples = @ExampleObject(
+                                    name = "Transfer request",
+                                    value = """
+                                {
+                                  "fromAccount": {
+                                    "iban": "NL13INHO0162593609",
+                                    "userId": 2,
+                                    "accountType": "CHECKING"
+                                  },
+                                  "toAccount": {
+                                    "iban": "NL18INHO0398474392",
+                                    "userId": 4,
+                                    "accountType": "CHECKING"
+                                  },
+                                  "initiatedBy": {
+                                    "id": 2,
+                                    "firstName": "Jan",
+                                    "lastName": "Jansen"
+                                  },
+                                  "amount": 250.00,
+                                  "description": "Gift money :)",
+                                  "transactionType": "TRANSFER"
+                                }
+                                """
+                            )
                     )
             )
             @RequestBody TransactionRequestDTO transactionRequestDTO
     ) {
-        return transactionService.processTransaction(transactionRequestDTO, type);
+        return transactionService.processTransaction(transactionRequestDTO, TransactionType.TRANSFER);
+    }
+
+    @PostMapping("/withdraw")
+    @Operation(summary = "Withdraw money", description = "Withdraw funds from an account via ATM")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Withdrawal completed successfully",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = TransactionResponseDTO.class),
+                            examples = @ExampleObject(
+                                    name = "Withdraw response",
+                                    value = """
+                                            {
+                                              "fromAccount": {
+                                                "iban": "NL13INHO0162593609",
+                                                "userId": 2,
+                                                "accountType": "CHECKING"
+                                              },
+                                              "toAccount": {
+                                                "iban": "NL13INHO0162593609",
+                                                "userId": 2,
+                                                "accountType": "CHECKING"
+                                              },
+                                              "initiatedBy": {
+                                                "id": 2,
+                                                "firstName": "Jan",
+                                                "lastName": "Jansen"
+                                              },
+                                              "amount": 250.00,
+                                              "description": "ATM withdrawal",
+                                              "transactionType": "WITHDRAWAL"
+                                            }
+                                """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "400", description = "Insufficient balance or daily limit reached", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Account not found", content = @Content)
+    })
+    public TransactionResponseDTO withdraw(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = TransactionRequestDTO.class),
+                            examples = @ExampleObject(
+                                    name = "Withdraw request",
+                                    value = """
+                                            {
+                                              "fromAccount": {
+                                                "iban": "NL13INHO0162593609",
+                                                "userId": 2,
+                                                "accountType": "CHECKING"
+                                              },
+                                              "toAccount": {
+                                                "iban": "NL13INHO0162593609",
+                                                "userId": 2,
+                                                "accountType": "CHECKING"
+                                              },
+                                              "initiatedBy": {
+                                                "id": 2,
+                                                "firstName": "Jan",
+                                                "lastName": "Jansen"
+                                              },
+                                              "amount": 250.00,
+                                              "description": "ATM withdrawal",
+                                              "transactionType": "WITHDRAWAL"
+                                            }
+                                """
+                            )
+                    )
+            )
+            @RequestBody TransactionRequestDTO transactionRequestDTO
+    ) {
+        return transactionService.processTransaction(transactionRequestDTO, TransactionType.WITHDRAWAL);
+    }
+
+    @PostMapping("/deposit")
+    @Operation(summary = "Deposit money", description = "Deposit funds into an account via ATM")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Deposit completed successfully",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = TransactionResponseDTO.class),
+                            examples = @ExampleObject(
+                                    name = "Deposit response",
+                                    value = """
+                                            {
+                                              "fromAccount": {
+                                                "iban": "NL13INHO0162593609",
+                                                "userId": 2,
+                                                "accountType": "CHECKING"
+                                              },
+                                              "toAccount": {
+                                                "iban": "NL13INHO0162593609",
+                                                "userId": 2,
+                                                "accountType": "CHECKING"
+                                              },
+                                              "initiatedBy": {
+                                                "id": 2,
+                                                "firstName": "Jan",
+                                                "lastName": "Jansen"
+                                              },
+                                              "amount": 250.00,
+                                              "description": "ATM deposit",
+                                              "transactionType": "DEPOSIT"
+                                            }
+                                """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "400", description = "Insufficient balance or daily limit reached", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Account not found", content = @Content)
+    })
+    public TransactionResponseDTO deposit(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = TransactionRequestDTO.class),
+                            examples = @ExampleObject(
+                                    name = "Deposit request",
+                                    value = """
+                                            {
+                                              "fromAccount": {
+                                                "iban": "NL13INHO0162593609",
+                                                "userId": 2,
+                                                "accountType": "CHECKING"
+                                              },
+                                              "toAccount": {
+                                                "iban": "NL13INHO0162593609",
+                                                "userId": 2,
+                                                "accountType": "CHECKING"
+                                              },
+                                              "initiatedBy": {
+                                                "id": 2,
+                                                "firstName": "Jan",
+                                                "lastName": "Jansen"
+                                              },
+                                              "amount": 250.00,
+                                              "description": "ATM deposit",
+                                              "transactionType": "DEPOSIT"
+                                            }
+                                """
+                            )
+                    )
+            )
+            @RequestBody TransactionRequestDTO transactionRequestDTO
+    ) {
+        return transactionService.processTransaction(transactionRequestDTO, TransactionType.DEPOSIT);
     }
 
     @GetMapping("")
