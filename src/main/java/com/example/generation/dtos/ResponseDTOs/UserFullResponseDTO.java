@@ -1,13 +1,14 @@
 package com.example.generation.dtos.ResponseDTOs;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Value;
 
 @Value
 @Builder
-public class UserResponseDTO {
+public class UserFullResponseDTO {
     long id;
     String firstName;
     String lastName;
+    String email;
+    AddressResponseDTO address;
 }

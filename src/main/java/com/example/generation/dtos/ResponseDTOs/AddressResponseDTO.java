@@ -1,10 +1,13 @@
 package com.example.generation.dtos.ResponseDTOs;
 
-import lombok.Data;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
+import lombok.Value;
 
-@Data
+@Value
+@Builder
 public class AddressResponseDTO {
-    private long id;
-    private String city;
-    private String country;
+    long id;
+    String city;
+    String country;
 }

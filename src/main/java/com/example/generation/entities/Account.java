@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
@@ -21,17 +22,13 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "account")
 public class Account {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(unique = true, nullable = false)
+    private String iban;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
-
-    @Column(unique = true, nullable = false)
-    private String iban;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "account_type", nullable = false)
@@ -56,19 +53,19 @@ public class Account {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @Column(name = "last_transfer_date", nullable = false)
-    private LocalDateTime lastTransferDate = LocalDateTime.now();
+    @Column(name = "last_transfer_date")
+    private LocalDate lastTransferDate = null;
 
     public void transact(BigDecimal amount, TransactionType type){
         BigDecimal newBalance;
-        LocalDateTime today = LocalDateTime.now();
-        BigDecimal currentTransferTally = dailyTransfer.add(amount);
+        LocalDate today = LocalDate.now();
 
         if (!today.equals(lastTransferDate)) {
             dailyTransfer = BigDecimal.ZERO;
             lastTransferDate = today;
         }
 
+        BigDecimal currentTransferTally = dailyTransfer.add(amount);
         if (type == TransactionType.DEPOSIT) {
                 newBalance = balance.add(amount);
         }
