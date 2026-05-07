@@ -41,7 +41,7 @@ public class AccountService {
     }
 
     public Account findById(Long id) {
-        Optional<Account> account = accountRepository.findById(Math.toIntExact(id));
+        Optional<Account> account = accountRepository.findById(id);
         if (account.isPresent()) {
             return account.get();
         }
@@ -68,7 +68,7 @@ public class AccountService {
         return account;
     }
 
-    public void deleteById(Integer id) {
+    public void deleteById(Long id) {
         accountRepository.deleteById(id);
     }
 
