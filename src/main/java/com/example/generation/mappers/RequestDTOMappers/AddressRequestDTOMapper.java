@@ -15,5 +15,4 @@ public interface AddressRequestDTOMapper {
     @Mapping(source = "city", target = "city")
     @Mapping(source = "country", target = "country")
     Address toEntity(AddressRequestDTO addressRequestDTO);
-    AddressRequestDTO toDTO(Address address);
 }
