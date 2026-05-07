@@ -1,5 +1,7 @@
 package com.example.generation.entities;
-
+import org.hibernate.annotations.Filter;
+import org.hibernate.annotations.FilterDef;
+import org.hibernate.annotations.ParamDef;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -18,6 +20,19 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Entity
 @Table(name = "transaction")
+@FilterDef(name = "dateRangeFilter", parameters = {
+    @ParamDef(name = "startDate", type = java.time.LocalDateTime.class),
+    @ParamDef(name = "endDate", type = java.time.LocalDateTime.class)
+})
+@FilterDef(name = "amountLtFilter", parameters = @ParamDef(name = "amountLt", type = java.math.BigDecimal.class))
+@FilterDef(name = "amountGtFilter", parameters = @ParamDef(name = "amountGt", type = java.math.BigDecimal.class))
+@FilterDef(name = "amountEqFilter", parameters = @ParamDef(name = "amountEq", type = java.math.BigDecimal.class))
+@FilterDef(name = "ibanFilter", parameters = @ParamDef(name = "iban", type = String.class))
+@Filter(name = "dateRangeFilter", condition = "timestamp >= :startDate AND timestamp <= :endDate")
+@Filter(name = "amountLtFilter", condition = "amount < :amountLt")
+@Filter(name = "amountGtFilter", condition = "amount > :amountGt")
+@Filter(name = "amountEqFilter", condition = "amount = :amountEq")
+@Filter(name = "ibanFilter", condition = "(EXISTS (SELECT 1 FROM account a WHERE a.id = from_account AND a.iban LIKE :iban) OR EXISTS (SELECT 1 FROM account a WHERE a.id = to_account_id AND a.iban LIKE :iban))")
 public class Transaction {
 
     @Id

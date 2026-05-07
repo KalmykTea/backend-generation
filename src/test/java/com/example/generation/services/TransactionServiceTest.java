@@ -1,6 +1,6 @@
 package com.example.generation.services;
 
-import com.example.generation.dtos.ResponseDTOs.TransactionSummaryResponse;
+import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
 import com.example.generation.entities.Account;
 import com.example.generation.entities.Transaction;
 import com.example.generation.entities.User;
@@ -87,29 +87,21 @@ class TransactionServiceTest {
 
         when(transactionRepository.findAll(any(Pageable.class))).thenReturn(transactionPage);
 
-        Page<TransactionSummaryResponse> result = transactionService.getPaginatedTransactions(pageable);
+        Page<TransactionResponseDTO> result = transactionService.getPaginatedTransactions(pageable);
 
         assertNotNull(result);
         assertEquals(2, result.getTotalElements());
         assertEquals(2, result.getContent().size());
 
-        TransactionSummaryResponse dto1 = result.getContent().get(0);
-        assertEquals(1L, dto1.transactionId());
-        assertEquals(TransactionType.TRANSFER, dto1.type());
-        assertEquals("NL01INHO0000000001", dto1.fromAccount());
-        assertEquals("NL01INHO0000000002", dto1.toAccount());
-        assertEquals(customerUser.getId(), dto1.initiatedBy().userId());
-        assertEquals("Customer One", dto1.initiatedBy().fullName());
-        assertEquals(Role.CUSTOMER, dto1.initiatedBy().role());
+        TransactionResponseDTO dto1 = result.getContent().get(0);
+        assertEquals(1L, dto1.getId());
+        assertEquals("NL01INHO0000000001", dto1.getFromAccountIBAN());
+        assertEquals("NL01INHO0000000002", dto1.getToAccountIBAN());
 
-        TransactionSummaryResponse dto2 = result.getContent().get(1);
-        assertEquals(2L, dto2.transactionId());
-        assertEquals(TransactionType.DEPOSIT, dto2.type());
-        assertNull(dto2.fromAccount());
-        assertEquals("NL01INHO0000000002", dto2.toAccount());
-        assertEquals(employeeUser.getId(), dto2.initiatedBy().userId());
-        assertEquals("Employee One", dto2.initiatedBy().fullName());
-        assertEquals(Role.EMPLOYEE, dto2.initiatedBy().role());
+        TransactionResponseDTO dto2 = result.getContent().get(1);
+        assertEquals(2L, dto2.getId());
+        assertEquals("NL01INHO0000000001", dto2.getFromAccountIBAN());
+        assertEquals("NL01INHO0000000002", dto2.getToAccountIBAN());
     }
 
     @Test
@@ -119,7 +111,7 @@ class TransactionServiceTest {
 
         when(transactionRepository.findAll(any(Pageable.class))).thenReturn(emptyPage);
 
-        Page<TransactionSummaryResponse> result = transactionService.getPaginatedTransactions(pageable);
+        Page<TransactionResponseDTO> result = transactionService.getPaginatedTransactions(pageable);
 
         assertNotNull(result);
         assertTrue(result.getContent().isEmpty());

@@ -1,6 +1,6 @@
 package com.example.generation.services;
 
-import com.example.generation.dtos.ResponseDTOs.EmployeeAccountResponseDTO;
+import com.example.generation.dtos.ResponseDTOs.AccountResponseDTO;
 import com.example.generation.entities.Account;
 import com.example.generation.entities.User;
 import com.example.generation.enums.AccountStatus;
@@ -59,19 +59,17 @@ class AccountServiceTest {
 
         when(accountRepository.findAll(any(Pageable.class))).thenReturn(accountPage);
 
-        Page<EmployeeAccountResponseDTO> result = accountService.getPaginatedAccounts(pageable);
+        Page<AccountResponseDTO> result = accountService.getPaginatedAccounts(pageable);
 
         assertNotNull(result);
         assertEquals(1, result.getTotalElements());
         assertEquals(1, result.getContent().size());
         
-        EmployeeAccountResponseDTO dto = result.getContent().get(0);
-        assertEquals(testAccount.getId(), dto.accountId());
-        assertEquals(testAccount.getIban(), dto.accountNumber());
-        assertEquals("John Doe", dto.customerName());
-        assertEquals(testAccount.getAccountType(), dto.accountType());
-        assertEquals(testAccount.getAccountStatus(), dto.status());
-        assertEquals(testAccount.getBalance(), dto.balance());
+        AccountResponseDTO dto = result.getContent().get(0);
+        assertEquals(testAccount.getId(), dto.getId());
+        assertEquals(testAccount.getIban(), dto.getIban());
+        assertEquals(testAccount.getAccountType(), dto.getAccountType());
+        assertEquals(testAccount.getBalance(), dto.getBalance());
     }
 
     @Test
@@ -81,7 +79,7 @@ class AccountServiceTest {
 
         when(accountRepository.findAll(any(Pageable.class))).thenReturn(emptyPage);
 
-        Page<EmployeeAccountResponseDTO> result = accountService.getPaginatedAccounts(pageable);
+        Page<AccountResponseDTO> result = accountService.getPaginatedAccounts(pageable);
 
         assertNotNull(result);
         assertTrue(result.getContent().isEmpty());

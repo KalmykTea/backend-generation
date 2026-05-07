@@ -1,8 +1,13 @@
 package com.example.generation.services;
 
-import com.example.generation.dtos.ResponseDTOs.EmployeeAccountResponseDTO;
+import com.example.generation.dtos.ResponseDTOs.AccountClosureResponse;
+import com.example.generation.dtos.ResponseDTOs.AccountResponseDTO;
 import com.example.generation.entities.Account;
 import com.example.generation.entities.Transaction;
+import com.example.generation.enums.AccountStatus;
+import com.example.generation.framework.exceptions.AccountAlreadyClosedException;
+import com.example.generation.framework.exceptions.AccountBalanceNotEmptyException;
+import com.example.generation.mappers.ResponseDTOMappers.AccountResponseDTOMapper;
 import com.example.generation.repositories.AccountRepository;
 import com.example.generation.repositories.TransactionRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -10,19 +15,24 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
 public class AccountService {
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
+    private final AccountResponseDTOMapper accountResponseDTOMapper;
 
     public AccountService (
             AccountRepository accountRepository,
-            TransactionRepository transactionRepository
+            TransactionRepository transactionRepository,
+            AccountResponseDTOMapper accountResponseDTOMapper
     ) {
         this.accountRepository = accountRepository;
         this.transactionRepository = transactionRepository;
+        this.accountResponseDTOMapper = accountResponseDTOMapper;
     }
 
     // basic stuff, input custom logic according to your user stories
@@ -62,15 +72,32 @@ public class AccountService {
         accountRepository.deleteById(id);
     }
 
-    public Page<EmployeeAccountResponseDTO> getPaginatedAccounts(Pageable pageable) {
+    public Page<AccountResponseDTO> getPaginatedAccounts(Pageable pageable) {
         return accountRepository.findAll(pageable)
-                .map(account -> new EmployeeAccountResponseDTO(
-                        account.getId(),
-                        account.getIban(),
-                        account.getUser().getFirstName() + " " + account.getUser().getLastName(),
-                        account.getAccountType(),
-                        account.getAccountStatus(),
-                        account.getBalance()
-                ));
+                .map(this.accountResponseDTOMapper::toDTO);
     }
+
+    public AccountClosureResponse closeAccount(Long accountId) {
+        Account account = this.findById(accountId);
+
+        if (account.getAccountStatus() == AccountStatus.CLOSED) {
+            throw new AccountAlreadyClosedException("Account is already closed.");
+        }
+
+        if (account.getBalance().compareTo(BigDecimal.ZERO) != 0) {
+            throw new AccountBalanceNotEmptyException("Account balance must be zero before closing.");
+        }
+
+        account.setAccountStatus(AccountStatus.CLOSED);
+        accountRepository.save(account);
+//Use maybe mapper???
+        return new AccountClosureResponse(
+                account.getId(),
+                account.getIban(),
+                account.getAccountStatus(),
+                LocalDateTime.now(),
+                "Account successfully closed."
+        );
+    }
+
 }
