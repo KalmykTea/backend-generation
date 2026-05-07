@@ -3,10 +3,7 @@ import org.hibernate.annotations.Filter;
 import org.hibernate.annotations.FilterDef;
 import org.hibernate.annotations.ParamDef;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import com.example.generation.enums.TransactionStatus;
 import com.example.generation.enums.TransactionType;
@@ -40,11 +37,11 @@ public class Transaction {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "from_account", nullable = true)
+    @JoinColumn(name = "from_account_iban", nullable = true)
     private Account fromAccount;
 
     @ManyToOne
-    @JoinColumn(name = "to_account_id", nullable = true)
+    @JoinColumn(name = "to_account_iban", nullable = true)
     private Account toAccount;
 
     @ManyToOne

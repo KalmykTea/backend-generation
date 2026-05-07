@@ -1,23 +1,20 @@
 package com.example.generation.dtos.ResponseDTOs;
 
-import lombok.Data;
+import com.example.generation.enums.TransactionType;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
+import lombok.Value;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
-@Data
+@Value
+@Builder
 public class TransactionResponseDTO {
-    private long id;
-    private String fromAccountFirstName;
-    private String fromAccountLastName;
-    private String fromAccountIBAN;
-    private String toAccountFirstName;
-    private String toAccountLastName;
-    private String toAccountIBAN;
-    private String initiatedByFirstName;
-    private String initiatedByLastName;
-    private String initiatedByIBAN;
-    private BigDecimal amount;
-    private String description;
-    private LocalDateTime timestamp;
+    long id;
+    AccountTransactionResponseDTO fromAccount;
+    AccountTransactionResponseDTO toAccount;
+    UserResponseDTO initiatedBy;
+    BigDecimal amount;
+    String description;
+    TransactionType transactionType;
 }
