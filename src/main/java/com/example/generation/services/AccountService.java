@@ -3,7 +3,6 @@ package com.example.generation.services;
 import com.example.generation.dtos.RequestDTOs.AccountFullRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.AccountFullResponseDTO;
 import com.example.generation.dtos.ResponseDTOs.AccountClosureResponse;
-import com.example.generation.dtos.ResponseDTOs.AccountResponseDTO;
 import com.example.generation.entities.Account;
 import com.example.generation.entities.User;
 import com.example.generation.enums.AccountType;
@@ -12,8 +11,8 @@ import com.example.generation.entities.Transaction;
 import com.example.generation.enums.AccountStatus;
 import com.example.generation.framework.exceptions.AccountAlreadyClosedException;
 import com.example.generation.framework.exceptions.AccountBalanceNotEmptyException;
-import com.example.generation.mappers.ResponseDTOMappers.AccountResponseDTOMapper;
 import com.example.generation.repositories.AccountRepository;
+import com.example.generation.repositories.TransactionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,13 +29,13 @@ public class AccountService {
     private final AccountRepository accountRepository;
     private final AccountFullResponseDTOMapper accountFullResponseDTOMapper;
     private final TransactionRepository transactionRepository;
-    private final AccountResponseDTOMapper accountResponseDTOMapper;
+    private final AccountFullResponseDTOMapper accountResponseDTOMapper;
 
     public AccountService (
             AccountRepository accountRepository,
-            AccountFullResponseDTOMapper accountFullResponseDTOMapper
+            AccountFullResponseDTOMapper accountFullResponseDTOMapper,
             TransactionRepository transactionRepository,
-            AccountResponseDTOMapper accountResponseDTOMapper
+            AccountFullResponseDTOMapper accountResponseDTOMapper
     ) {
         this.accountRepository = accountRepository;
         this.accountFullResponseDTOMapper = accountFullResponseDTOMapper;
@@ -52,7 +51,7 @@ public class AccountService {
         return accountRepository.findByUserId(userId);
     }
 
-    public Account findById(Long id) {
+    public Account findById(String id) {
         Optional<Account> account = accountRepository.findById(id);
         if (account.isPresent()) {
             return account.get();
@@ -129,16 +128,16 @@ public class AccountService {
         return iban;
     }
 
-    public void deleteById(Long id) {
+    public void deleteById(String id) {
         accountRepository.deleteById(id);
     }
 
-    public Page<AccountResponseDTO> getPaginatedAccounts(Pageable pageable) {
+    public Page<AccountFullResponseDTO> getPaginatedAccounts(Pageable pageable) {
         return accountRepository.findAll(pageable)
                 .map(this.accountResponseDTOMapper::toDTO);
     }
 
-    public AccountClosureResponse closeAccount(Long accountId) {
+    public AccountClosureResponse closeAccount(String accountId) {
         Account account = this.findById(accountId);
 
         if (account.getAccountStatus() == AccountStatus.CLOSED) {
@@ -153,7 +152,6 @@ public class AccountService {
         accountRepository.save(account);
 //Use maybe mapper???
         return new AccountClosureResponse(
-                account.getId(),
                 account.getIban(),
                 account.getAccountStatus(),
                 LocalDateTime.now(),

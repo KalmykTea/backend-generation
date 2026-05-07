@@ -1,9 +1,5 @@
 package com.example.generation.controllers;
-
-import com.example.generation.dtos.RequestDTOs.AccountRequestDTO;
-import com.example.generation.dtos.RequestDTOs.TransactionRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.AccountClosureResponse;
-import com.example.generation.dtos.ResponseDTOs.AccountResponseDTO;
 import com.example.generation.dtos.RequestDTOs.AccountFullRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.AccountFullResponseDTO;
 import com.example.generation.entities.Account;
@@ -61,7 +57,7 @@ public class AccountController {
             @RequestParam(defaultValue = "20") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<AccountResponseDTO> accountPage = accountService.getPaginatedAccounts(pageable);
+        Page<AccountFullResponseDTO> accountPage = accountService.getPaginatedAccounts(pageable);
 
         return Map.of(
                 "content", accountPage.getContent(),
@@ -77,7 +73,7 @@ public class AccountController {
     @PatchMapping("/{accountId}/close")
     @PreAuthorize("hasRole('EMPLOYEE')")
     @Operation(summary = "Close a customer account", description = "Soft deactivates a customer account by setting its status to CLOSED. Restricted to employees.")
-    public ResponseEntity<AccountClosureResponse> closeAccount(@PathVariable Long accountId) {
+    public ResponseEntity<AccountClosureResponse> closeAccount(@PathVariable String accountId) {
         return ResponseEntity.ok(accountService.closeAccount(accountId));
     }
 

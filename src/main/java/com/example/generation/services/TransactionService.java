@@ -61,22 +61,18 @@ public class TransactionService {
             throw new IllegalArgumentException("User is not authorized to view transactions for this user.");
         }
         List<Account> userAccounts = accountRepository.findByUser_Email(email);
-        List<Long> accountIds = userAccounts.stream().map(Account::getId).toList();
+        List<String> accountIbans = userAccounts.stream().map(Account::getIban).toList();
 
-        if (accountIds.isEmpty()) {
+        if (accountIbans.isEmpty()) {
             return Page.empty(pageable);
         }
 
         Session session = enableFilters(filters);
 
-        // Use Specification to restrict to user's accounts
-        Specification<Transaction> spec = (root, query, cb) ->
-            cb.or(
-                root.get("fromAccount").get("id").in(accountIds),
-                root.get("toAccount").get("id").in(accountIds)
-            );
+        session.enableFilter("userAccountsFilter")
+                .setParameterList("accountIbans", accountIbans);
 
-        Page<Transaction> transactions = transactionRepository.findAll(spec, pageable);
+        Page<Transaction> transactions = transactionRepository.findAll(pageable);
         this.cleanFilters(session);
 
         return transactions.map(transactionResponseDTOMapper::toDTO);
