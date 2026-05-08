@@ -3,23 +3,30 @@ package com.example.generation.services;
 import com.example.generation.dtos.RequestDTOs.TransactionRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
 import com.example.generation.entities.Account;
+import com.example.generation.dtos.RequestDTOs.TransactionFilterRequest;
+import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
+import com.example.generation.entities.Account;
 import com.example.generation.entities.Transaction;
 import com.example.generation.enums.AccountStatus;
 import com.example.generation.enums.AccountType;
 import com.example.generation.enums.TransactionType;
 import com.example.generation.mappers.ResponseDTOMappers.TransactionResponseDTOMapper;
+import com.example.generation.entities.User;
+import com.example.generation.mappers.ResponseDTOMappers.TransactionResponseDTOMapper;
 import com.example.generation.repositories.AccountRepository;
 import com.example.generation.repositories.TransactionRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import com.example.generation.repositories.UserRepository;
 import jakarta.persistence.EntityManager;
 import org.hibernate.Session;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -47,29 +54,26 @@ public class TransactionService {
     }
 
     @Transactional(readOnly = true)
-    public Page<TransactionResponseDTO> getFilteredTransactions(
-            LocalDate startDate,
-            LocalDate endDate,
-            BigDecimal amountLt,
-            BigDecimal amountGt,
-            BigDecimal amountEq,
-            String iban,
-            Pageable pageable,
-            Long userId
-    ) {
-        userRepository.findById(userId).orElseThrow();
-        List<Account> userAccounts = accountRepository.findByUserId(userId);
+    public Page<TransactionResponseDTO> getFilteredTransactions(TransactionFilterRequest filters, Pageable pageable, Long userId) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = this.userRepository.findByEmail(email).orElseThrow();
+        if (!user.getId().equals(userId) || !user.getRole().equals("EMPLOYEE")) {
+            throw new IllegalArgumentException("User is not authorized to view transactions for this user.");
+        }
+        List<Account> userAccounts = accountRepository.findByUser_Email(email);
         List<String> accountIbans = userAccounts.stream().map(Account::getIban).toList();
 
         if (accountIbans.isEmpty()) {
             return Page.empty(pageable);
         }
 
-        Session session = enableFilters(startDate, endDate, amountLt, amountGt, amountEq, iban);
-        session.enableFilter("userAccountsFilter").setParameterList("accountIbans", accountIbans);
+        Session session = enableFilters(filters);
+
+        session.enableFilter("userAccountsFilter")
+                .setParameterList("accountIbans", accountIbans);
 
         Page<Transaction> transactions = transactionRepository.findAll(pageable);
-        cleanFilters(session);
+        this.cleanFilters(session);
 
         return transactions.map(transactionResponseDTOMapper::toDTO);
     }
@@ -79,15 +83,16 @@ public class TransactionService {
         return transactions.map(transactionResponseDTOMapper::toDTO);
     }
 
-    public Iterable<Transaction> findAll() {
+    // basic stuff, input custom logic according to your user stories
+    public Iterable<Transaction> findAll(){
         return transactionRepository.findAll();
     }
 
-    public Optional<Transaction> findById(Long id) {
+    public Optional<Transaction> findById(Long id){
         return transactionRepository.findById(id);
     }
 
-    public Transaction save(Transaction transaction) {
+    public Transaction save(Transaction transaction){
         return transactionRepository.save(transaction);
     }
 
@@ -105,9 +110,9 @@ public class TransactionService {
         validateAccountForTransfer(fromAccount, "Sender account");
 
         Transaction transaction = switch (type) {
-            case TRANSFER -> processTransfer(dto, fromAccount);
-            case WITHDRAWAL -> processWithdraw(dto, fromAccount);
-            case DEPOSIT -> processDeposit(dto, fromAccount);
+            case TRANSFER  -> processTransfer(dto, fromAccount);
+            case WITHDRAWAL  -> processWithdraw(dto, fromAccount);
+            case DEPOSIT   -> processDeposit(dto, fromAccount);
         };
 
         Transaction saved = transactionRepository.save(transaction);
@@ -156,6 +161,7 @@ public class TransactionService {
         transaction.setAmount(dto.getAmount());
         transaction.setDescription(dto.getDescription());
         transaction.setTransactionType(dto.getTransactionType());
+        // Temporary - use sender as initiator
         transaction.setInitiatedBy(fromAccount.getUser());
 
         return transaction;
@@ -165,47 +171,42 @@ public class TransactionService {
         return transactionRepository.findTransactionsByUserId(userId, pageable);
     }
 
-    private Session enableFilters(
-            LocalDate startDate,
-            LocalDate endDate,
-            BigDecimal amountLt,
-            BigDecimal amountGt,
-            BigDecimal amountEq,
-            String iban
-    ) {
+    private Session enableFilters(TransactionFilterRequest filters)
+    {
         Session session = entityManager.unwrap(Session.class);
 
-        if (startDate != null && endDate != null) {
+        // Hibernate dynamic filters for advanced filtering
+        if (filters.startDate() != null && filters.endDate() != null) {
             session.enableFilter("dateRangeFilter")
-                    .setParameter("startDate", startDate.atStartOfDay())
-                    .setParameter("endDate", endDate.atTime(23, 59, 59));
+                    .setParameter("startDate", filters.startDate().atStartOfDay())
+                    .setParameter("endDate", filters.endDate().atTime(23, 59, 59));
         }
 
-        if (amountLt != null) {
-            session.enableFilter("amountLtFilter").setParameter("amountLt", amountLt);
+        if (filters.amountLt() != null) {
+            session.enableFilter("amountLtFilter").setParameter("amountLt", filters.amountLt());
         }
 
-        if (amountGt != null) {
-            session.enableFilter("amountGtFilter").setParameter("amountGt", amountGt);
+        if (filters.amountGt() != null) {
+            session.enableFilter("amountGtFilter").setParameter("amountGt", filters.amountGt());
         }
 
-        if (amountEq != null) {
-            session.enableFilter("amountEqFilter").setParameter("amountEq", amountEq);
+        if (filters.amountEq() != null) {
+            session.enableFilter("amountEqFilter").setParameter("amountEq", filters.amountEq());
         }
 
-        if (iban != null && !iban.isBlank()) {
-            session.enableFilter("ibanFilter").setParameter("iban", "%" + iban + "%");
+        if (filters.iban() != null && !filters.iban().isBlank()) {
+            session.enableFilter("ibanFilter").setParameter("iban", "%" + filters.iban() + "%");
         }
 
         return session;
     }
 
-    private void cleanFilters(Session session) {
+    private void cleanFilters(Session session)
+    {
         session.disableFilter("dateRangeFilter");
         session.disableFilter("amountLtFilter");
         session.disableFilter("amountGtFilter");
         session.disableFilter("amountEqFilter");
         session.disableFilter("ibanFilter");
-        session.disableFilter("userAccountsFilter");
     }
 }
