@@ -67,7 +67,8 @@ public class TransactionService {
             return Page.empty(pageable);
         }
 
-        Session session = enableFilters(startDate, endDate, amountLt, amountGt, amountEq, iban, accountIbans);
+        Session session = enableFilters(startDate, endDate, amountLt, amountGt, amountEq, iban);
+        session.enableFilter("userAccountsFilter").setParameterList("accountIbans", accountIbans);
 
         Page<Transaction> transactions = transactionRepository.findAll(pageable);
         cleanFilters(session);
@@ -172,12 +173,9 @@ public class TransactionService {
             BigDecimal amountLt,
             BigDecimal amountGt,
             BigDecimal amountEq,
-            String iban,
-            List<String> accountIbans
+            String iban
     ) {
         Session session = entityManager.unwrap(Session.class);
-
-        session.enableFilter("userAccountsFilter").setParameterList("accountIbans", accountIbans);
 
         if (startDate != null && endDate != null) {
             session.enableFilter("dateRangeFilter")
