@@ -12,7 +12,6 @@ import com.example.generation.repositories.AccountRepository;
 import com.example.generation.repositories.TransactionRepository;
 import com.example.generation.repositories.UserRepository;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityNotFoundException;
 import org.hibernate.Session;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -58,8 +57,7 @@ public class TransactionService {
             Pageable pageable,
             Long userId
     ) {
-        userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User with id " + userId + " not found"));
+        userRepository.findById(userId).orElseThrow();
         List<Account> userAccounts = accountRepository.findByUserId(userId);
         List<String> accountIbans = userAccounts.stream().map(Account::getIban).toList();
 
