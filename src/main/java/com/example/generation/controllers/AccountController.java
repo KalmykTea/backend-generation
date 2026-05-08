@@ -3,7 +3,6 @@ import com.example.generation.dtos.ResponseDTOs.AccountClosureResponse;
 import com.example.generation.dtos.RequestDTOs.AccountFullRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.AccountFullResponseDTO;
 import com.example.generation.entities.Account;
-import com.example.generation.framework.annotations.ValidIBAN;
 import com.example.generation.framework.groups.OnUpdate;
 import com.example.generation.mappers.RequestDTOMappers.AccountFullRequestDTOMapper;
 import com.example.generation.mappers.ResponseDTOMappers.AccountFullResponseDTOMapper;
@@ -17,12 +16,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import jakarta.validation.groups.Default;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -71,7 +67,6 @@ public class AccountController {
     //close account
 
     @PatchMapping("/{accountId}/close")
-    @PreAuthorize("hasRole('EMPLOYEE')")
     @Operation(summary = "Close a customer account", description = "Soft deactivates a customer account by setting its status to CLOSED. Restricted to employees.")
     public ResponseEntity<AccountClosureResponse> closeAccount(@PathVariable String accountId) {
         return ResponseEntity.ok(accountService.closeAccount(accountId));

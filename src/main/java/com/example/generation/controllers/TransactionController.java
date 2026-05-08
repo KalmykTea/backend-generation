@@ -5,8 +5,6 @@ import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
 import com.example.generation.entities.Transaction;
 import com.example.generation.enums.TransactionType;
 import com.example.generation.mappers.ResponseDTOMappers.TransactionResponseDTOMapper;
-import com.example.generation.dtos.RequestDTOs.TransactionFilterRequest;
-import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
 import com.example.generation.services.TransactionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -14,20 +12,15 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -311,9 +304,10 @@ public class TransactionController {
             @RequestParam(defaultValue = "20") int size,
             @PathVariable Long userId) {
 
-        TransactionFilterRequest filters = new TransactionFilterRequest(startDate, endDate, amountLt, amountGt, amountEq, iban);
         Pageable pageable = PageRequest.of(page, size);
-        Page<TransactionResponseDTO> transactionPage = transactionService.getFilteredTransactions(filters, pageable, userId);
+        Page<TransactionResponseDTO> transactionPage = transactionService.getFilteredTransactions(
+                startDate, endDate, amountLt, amountGt, amountEq, iban, pageable, userId
+        );
 
         return Map.of(
                 "content", transactionPage.getContent(),
@@ -325,7 +319,6 @@ public class TransactionController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('EMPLOYEE')")
     @Operation(summary = "Get paginated list of all transactions", description = "Retrieve a paginated list of all transactions. Restricted to employees.")
     public Map<String, Object> getPaginatedTransactions(
             @RequestParam(defaultValue = "0") int page,
