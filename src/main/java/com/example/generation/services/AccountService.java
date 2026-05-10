@@ -1,61 +1,105 @@
 package com.example.generation.services;
 
+import com.example.generation.dtos.RequestDTOs.AccountFullRequestDTO;
+import com.example.generation.dtos.ResponseDTOs.AccountFullResponseDTO;
 import com.example.generation.entities.Account;
-import com.example.generation.entities.Transaction;
+import com.example.generation.entities.User;
+import com.example.generation.enums.AccountType;
+import com.example.generation.mappers.ResponseDTOMappers.AccountFullResponseDTOMapper;
 import com.example.generation.repositories.AccountRepository;
-import com.example.generation.repositories.TransactionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import java.util.List;
+import java.util.Random;
 
 @Service
 public class AccountService {
     private final AccountRepository accountRepository;
-    private final TransactionRepository transactionRepository;
+    private final AccountFullResponseDTOMapper accountFullResponseDTOMapper;
 
     public AccountService (
             AccountRepository accountRepository,
-            TransactionRepository transactionRepository
+            AccountFullResponseDTOMapper accountFullResponseDTOMapper
     ) {
         this.accountRepository = accountRepository;
-        this.transactionRepository = transactionRepository;
+        this.accountFullResponseDTOMapper = accountFullResponseDTOMapper;
     }
 
-    // basic stuff, input custom logic according to your user stories
     public Iterable<Account> findAll() {
         return accountRepository.findAll();
     }
 
-    public Account findById(Long id) {
-        Optional<Account> account = accountRepository.findById(Math.toIntExact(id));
-        if (account.isPresent()) {
-            return account.get();
-        }
-        else throw new EntityNotFoundException("Account with id: " + id + " not found");
+    public List<Account> findAccountsByUserId(Long userId) {
+        return accountRepository.findByUserId(userId);
     }
 
-    public Account save(Account account) {
-        return accountRepository.save(account);
+    public AccountFullResponseDTO update(AccountFullRequestDTO accountFullRequestDTO, String iban) {
+        Account existing = this.getAccountByIbanOrThrow(iban);
+        existing.setDailyLimit(accountFullRequestDTO.getDailyLimit());
+        existing.setAbsoluteLimit(accountFullRequestDTO.getAbsoluteLimit());
+        return accountFullResponseDTOMapper.toDTO(accountRepository.save(existing));
     }
 
-    public Account update(Account account, Long id) {
-        Account existing = this.findById(id);
-        if (account.getAbsoluteLimit()!= null) existing.setAbsoluteLimit(account.getAbsoluteLimit());
-        if (account.getDailyLimit()!= null) existing.setDailyLimit(account.getDailyLimit());
-        if (account.getAccountStatus()!= null) existing.setAccountStatus(account.getAccountStatus());
-        return accountRepository.save(existing);
-    }
-
-    public Account withdrawOrDeposit(Long id, Transaction transaction) {
-        Account account = this.findById(id);
-        account.transact(transaction.getAmount(), transaction.getTransactionType());
-        transactionRepository.save(transaction);
+    public void save(Account account) {
         accountRepository.save(account);
-        return account;
     }
 
-    public void deleteById(Integer id) {
-        accountRepository.deleteById(id);
+    public Account getAccountByIbanOrThrow(String iban) {
+        return accountRepository.findByIban(iban)
+                .orElseThrow(() -> new EntityNotFoundException("Account with IBAN " + iban + " not found"));
+    }
+
+    public void deleteByIban(String iban) {
+        accountRepository.deleteById(iban);
+    }
+
+    public AccountFullResponseDTO getAccountByIban(String iban) {
+        Account account = accountRepository.findByIban(iban)
+                .orElseThrow(() -> new EntityNotFoundException("Account not found"));
+
+        return accountFullResponseDTOMapper.toDTO(account);
+    }
+
+    public List<String> getIbansByUserName(String firstName, String lastName) {
+        return accountRepository
+                .findByUserFirstNameAndUserLastName(firstName, lastName)
+                .stream()
+                .map(Account::getIban)
+                .toList();
+    }
+
+    public void createAccountsForUser(User user) {
+        Account current = new Account();
+        current.setUser(user);
+        current.setIban(generateUniqueIban());
+        current.setAccountType(AccountType.CHECKING);
+        accountRepository.save(current);
+
+        Account savings = new Account();
+        savings.setUser(user);
+        savings.setIban(generateUniqueIban());
+        savings.setAccountType(AccountType.SAVINGS);
+        accountRepository.save(savings);
+    }
+
+    private String generateUniqueIban() {
+        Random random = new Random();
+        String iban;
+
+        do {
+            // Build IBAN string (NL + 00 + INHO0 + 000000000)
+            StringBuilder sb = new StringBuilder();
+            int number = random.nextInt(10,100);
+            sb.append("NL");
+            sb.append(number);
+            sb.append("INHO0");
+            for (int i = 0; i < 9; i++) {
+                sb.append(random.nextInt(10));
+            }
+            iban = sb.toString();
+        } while (accountRepository.findByIban(iban).isPresent());
+
+        return iban;
     }
 }

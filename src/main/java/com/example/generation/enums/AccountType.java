@@ -1,5 +1,5 @@
 package com.example.generation.enums;
 
 public enum AccountType {
-    SAVINGS, CURRENT;
+    SAVINGS, CHECKING;
 }

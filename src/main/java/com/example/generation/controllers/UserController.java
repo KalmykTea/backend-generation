@@ -1,10 +1,16 @@
 package com.example.generation.controllers;
 
+import com.example.generation.dtos.ResponseDTOs.UserFullResponseDTO;
+import com.example.generation.dtos.ResponseDTOs.UserResponseDTO;
 import com.example.generation.services.AddressService;
 import com.example.generation.services.UserService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Tag(name = "Users", description = "Operations for managing users")
 @RestController
@@ -19,4 +25,23 @@ public class UserController {
     }
 
     // controller methods based on user stories with swagger doc code go here
+
+    @Operation(summary = "Get list of customers pending approval")
+    @GetMapping("/pending")
+    public ResponseEntity<List<UserFullResponseDTO>> getPendingUsers() {
+        List<UserFullResponseDTO> result = userService.getPendingUsers();
+
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
+    @Operation(
+            summary = "Approve user",
+            description = "Approves a user with Pending status. Creates a Current and Savings account with a unique IBAN"
+    )
+    @PostMapping("/{id}/approve")
+    public ResponseEntity<UserFullResponseDTO> approveUser(@PathVariable Long id) {
+        UserFullResponseDTO result = userService.approveUser(id);
+
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
 }
