@@ -324,7 +324,6 @@ public class TransactionController {
         );
     }
 
-    @GetMapping
     @PreAuthorize("hasRole('EMPLOYEE')")
     @Operation(summary = "Get paginated list of all transactions", description = "Retrieve a paginated list of all transactions. Restricted to employees.")
     public Map<String, Object> getPaginatedTransactions(

@@ -104,7 +104,7 @@ public class AccountController {
             return accountService.update(accountFullRequestDTO, iban);
     }
 
-    @GetMapping("")
+    @GetMapping("/user")
     @Operation(summary = "Get accounts by user", description = "Returns all accounts belonging to a specific user")
     @ApiResponses(value = {
             @ApiResponse(

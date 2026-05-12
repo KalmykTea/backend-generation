@@ -1,4 +1,5 @@
 package com.example.generation.entities;
+import jakarta.validation.constraints.Null;
 import org.hibernate.annotations.Filter;
 import org.hibernate.annotations.FilterDef;
 import org.hibernate.annotations.ParamDef;
@@ -10,6 +11,7 @@ import com.example.generation.enums.TransactionType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter

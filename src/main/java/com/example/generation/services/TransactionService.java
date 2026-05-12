@@ -55,12 +55,12 @@ public class TransactionService {
 
     @Transactional(readOnly = true)
     public Page<TransactionResponseDTO> getFilteredTransactions(TransactionFilterRequest filters, Pageable pageable, Long userId) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = this.userRepository.findByEmail(email).orElseThrow();
-        if (!user.getId().equals(userId) || !user.getRole().equals("EMPLOYEE")) {
-            throw new IllegalArgumentException("User is not authorized to view transactions for this user.");
-        }
-        List<Account> userAccounts = accountRepository.findByUser_Email(email);
+//        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = this.userRepository.findById(userId).orElseThrow();
+//        if (!user.getId().equals(userId)) {
+//            throw new IllegalArgumentException("User is not authorized to view transactions for this user.");
+//        }
+        List<Account> userAccounts = accountRepository.findByUserId(userId);
         List<String> accountIbans = userAccounts.stream().map(Account::getIban).toList();
 
         if (accountIbans.isEmpty()) {
@@ -194,10 +194,6 @@ public class TransactionService {
             session.enableFilter("amountEqFilter").setParameter("amountEq", filters.amountEq());
         }
 
-        if (filters.iban() != null && !filters.iban().isBlank()) {
-            session.enableFilter("ibanFilter").setParameter("iban", "%" + filters.iban() + "%");
-        }
-
         return session;
     }
 
@@ -207,6 +203,6 @@ public class TransactionService {
         session.disableFilter("amountLtFilter");
         session.disableFilter("amountGtFilter");
         session.disableFilter("amountEqFilter");
-        session.disableFilter("ibanFilter");
+        session.disableFilter("userAccountsFilter");
     }
 }
