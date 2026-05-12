@@ -1,7 +1,6 @@
 package com.example.generation.controllers;
 
 import com.example.generation.dtos.RequestDTOs.LoginRequestDTO;
-import com.example.generation.entities.Account;
 import com.example.generation.services.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
