@@ -1,5 +1,13 @@
 package com.example.generation.enums;
 
-public enum Role {
-    EMPLOYEE, CUSTOMER
+import jakarta.annotation.Nullable;
+import org.springframework.security.core.GrantedAuthority;
+
+public enum Role implements GrantedAuthority {
+    EMPLOYEE, CUSTOMER;
+
+    @Override
+    public @Nullable String getAuthority() {
+        return name();
+    }
 }
