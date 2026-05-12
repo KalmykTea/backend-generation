@@ -6,13 +6,16 @@ import com.example.generation.enums.UserStatus;
 import com.example.generation.mappers.ResponseDTOMappers.UserResponseDTOMapper;
 import com.example.generation.repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
-public class UserService {
+public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final AccountService accountService;
     private final UserResponseDTOMapper userResponseDTOMapper;
@@ -25,6 +28,11 @@ public class UserService {
         this.userRepository = userRepository;
         this.accountService = accountService;
         this.userResponseDTOMapper = userResponseDTOMapper;
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException{
+        return userRepository.findUserByEmail(email).orElseThrow(() -> new UsernameNotFoundException(email));
     }
 
     // basic stuff, input custom logic according to your user stories
@@ -71,4 +79,6 @@ public class UserService {
                 .map(userResponseDTOMapper::toDTO)
                 .toList();
     }
+
+
 }
