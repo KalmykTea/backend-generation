@@ -126,7 +126,7 @@ public class TransactionController {
                                     name = "Withdraw response",
                                     value = """
                                             {
-                                              "iban": "NL13INHO0162593609"
+                                              "iban": "NL13INHO0162593609",
                                               "amount": 250.00,
                                               "description": "ATM deposit",
                                               "transactionType": "DEPOSIT"
@@ -149,7 +149,7 @@ public class TransactionController {
                                     name = "Withdraw request",
                                     value = """
                                             {
-                                              "iban": "NL13INHO0162593609"
+                                              "iban": "NL13INHO0162593609",
                                               "amount": 250.00,
                                               "description": "ATM deposit",
                                               "transactionType": "DEPOSIT"
@@ -176,7 +176,7 @@ public class TransactionController {
                                     name = "Deposit response",
                                     value = """
                                             {
-                                              "iban": "NL13INHO0162593609"
+                                              "iban": "NL13INHO0162593609",
                                               "amount": 250.00,
                                               "description": "ATM deposit",
                                               "transactionType": "DEPOSIT"
@@ -199,7 +199,7 @@ public class TransactionController {
                                     name = "Deposit request",
                                     value = """
                                             {
-                                              "iban": "NL13INHO0162593609"
+                                              "iban": "NL13INHO0162593609",
                                               "amount": 250.00,
                                               "description": "ATM deposit",
                                               "transactionType": "DEPOSIT"
