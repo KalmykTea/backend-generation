@@ -212,7 +212,7 @@ public class TransactionController {
         return transactionService.processATMRequest(requestDTO);
     }
 
-    @GetMapping("")
+    @GetMapping("/user")
     @Operation(summary = "Get transactions by user", description = "Returns all transactions paginated belonging to a specific user")
     @ApiResponses(value = {
             @ApiResponse(
