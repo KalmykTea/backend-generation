@@ -5,6 +5,7 @@ import com.example.generation.dtos.RequestDTOs.TransactionRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.ATMResponseDTO;
 import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
 import com.example.generation.entities.Transaction;
+import com.example.generation.enums.TransactionType;
 import com.example.generation.mappers.ResponseDTOMappers.TransactionResponseDTOMapper;
 import com.example.generation.services.TransactionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -159,7 +160,7 @@ public class TransactionController {
             )
             @RequestBody ATMRequestDTO requestDTO
     ) {
-        requestDTO.setTransactionType(com.example.generation.enums.TransactionType.WITHDRAWAL);
+        requestDTO.setTransactionType(TransactionType.WITHDRAWAL);
         return transactionService.processATMRequest(requestDTO);
     }
 
@@ -210,7 +211,7 @@ public class TransactionController {
             )
             @RequestBody ATMRequestDTO requestDTO
     ) {
-        requestDTO.setTransactionType(com.example.generation.enums.TransactionType.DEPOSIT);
+        requestDTO.setTransactionType(TransactionType.DEPOSIT);
         return transactionService.processATMRequest(requestDTO);
     }
 
