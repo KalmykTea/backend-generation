@@ -1,12 +1,15 @@
 package com.example.generation.services;
 
+import com.example.generation.dtos.ATMDTO;
 import com.example.generation.dtos.RequestDTOs.TransactionRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
 import com.example.generation.entities.Account;
 import com.example.generation.entities.Transaction;
+import com.example.generation.entities.User;
 import com.example.generation.enums.AccountStatus;
 import com.example.generation.enums.AccountType;
 import com.example.generation.enums.TransactionType;
+import com.example.generation.mappers.ATMDTOMapper;
 import com.example.generation.mappers.ResponseDTOMappers.TransactionResponseDTOMapper;
 import com.example.generation.repositories.TransactionRepository;
 import org.springframework.data.domain.Page;
@@ -21,13 +24,15 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final AccountService accountService;
     private final TransactionResponseDTOMapper transactionResponseDTOMapper;
+    private final ATMDTOMapper aTMDTOMapper;
 
     public TransactionService(TransactionRepository transactionRepository,
                               AccountService accountService,
-                              TransactionResponseDTOMapper transactionResponseDTOMapper) {
+                              TransactionResponseDTOMapper transactionResponseDTOMapper, ATMDTOMapper aTMDTOMapper) {
         this.transactionRepository = transactionRepository;
         this.accountService = accountService;
         this.transactionResponseDTOMapper = transactionResponseDTOMapper;
+        this.aTMDTOMapper = aTMDTOMapper;
     }
 
     // basic stuff, input custom logic according to your user stories
@@ -52,21 +57,9 @@ public class TransactionService {
     }
 
     @Transactional
-    public TransactionResponseDTO processTransaction(TransactionRequestDTO dto, TransactionType type) {
+    public TransactionResponseDTO processTransfer(TransactionRequestDTO dto) {
         Account fromAccount = accountService.getAccountByIbanOrThrow(dto.getFromAccount().getIban());
         validateAccountForTransfer(fromAccount, "Sender account");
-
-        Transaction transaction = switch (type) {
-            case TRANSFER  -> processTransfer(dto, fromAccount);
-            case WITHDRAWAL  -> processWithdraw(dto, fromAccount);
-            case DEPOSIT   -> processDeposit(dto, fromAccount);
-        };
-
-        Transaction saved = transactionRepository.save(transaction);
-        return transactionResponseDTOMapper.toDTO(saved);
-    }
-
-    private Transaction processTransfer(TransactionRequestDTO dto, Account fromAccount) {
         Account toAccount = accountService.getAccountByIbanOrThrow(dto.getToAccount().getIban());
         validateAccountForTransfer(toAccount, "Receiver account");
 
@@ -80,19 +73,25 @@ public class TransactionService {
         toAccount.transact(dto.getAmount(), TransactionType.DEPOSIT);
         accountService.save(fromAccount);
         accountService.save(toAccount);
-        return buildTransaction(fromAccount, toAccount, dto);
+        Transaction saved = transactionRepository.save(buildTransaction(fromAccount, toAccount, dto));
+        return transactionResponseDTOMapper.toDTO(saved);
     }
 
-    private Transaction processWithdraw(TransactionRequestDTO dto, Account fromAccount) {
-        fromAccount.transact(dto.getAmount(), TransactionType.WITHDRAWAL);
-        accountService.save(fromAccount);
-        return buildTransaction(fromAccount, fromAccount, dto);
-    }
-
-    private Transaction processDeposit(TransactionRequestDTO dto, Account fromAccount) {
-        fromAccount.transact(dto.getAmount(), TransactionType.DEPOSIT);
-        accountService.save(fromAccount);
-        return buildTransaction(fromAccount, fromAccount, dto);
+    @Transactional
+    public ATMDTO processATMAction(ATMDTO dto) {
+        Account account = accountService.getAccountByIbanOrThrow(dto.getIban());
+        switch (dto.getTransactionType()) {
+            case WITHDRAWAL:
+                account.transact(dto.getAmount(), TransactionType.WITHDRAWAL);
+                break;
+            case DEPOSIT:
+                account.transact(dto.getAmount(), TransactionType.DEPOSIT);
+                break;
+        }
+        accountService.save(account);
+        Transaction transaction = buildTransaction(account, dto);
+        transactionRepository.save(transaction);
+        return aTMDTOMapper.toATMDTO(transaction);
     }
 
     private void validateAccountForTransfer(Account account, String accountName) {
@@ -111,6 +110,18 @@ public class TransactionService {
         // Temporary - use sender as initiator
         transaction.setInitiatedBy(fromAccount.getUser());
 
+        return transaction;
+    }
+
+    //use functional programming later to merge the two build transactions... not sure how to do that yet
+    private Transaction buildTransaction(Account account, ATMDTO dto) {
+        Transaction transaction = new Transaction();
+        transaction.setFromAccount(account);
+        transaction.setToAccount(account);
+        transaction.setAmount(dto.getAmount());
+        transaction.setDescription(dto.getDescription());
+        transaction.setTransactionType(dto.getTransactionType());
+        transaction.setInitiatedBy(account.getUser());
         return transaction;
     }
 

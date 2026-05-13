@@ -36,8 +36,12 @@ public class AccountService {
 
     public AccountFullResponseDTO update(AccountFullRequestDTO accountFullRequestDTO, String iban) {
         Account existing = this.getAccountByIbanOrThrow(iban);
+        if (accountFullRequestDTO.getDailyLimit() != null) {
         existing.setDailyLimit(accountFullRequestDTO.getDailyLimit());
-        existing.setAbsoluteLimit(accountFullRequestDTO.getAbsoluteLimit());
+        }
+        if (accountFullRequestDTO.getAbsoluteLimit() != null) {
+            existing.setAbsoluteLimit(accountFullRequestDTO.getAbsoluteLimit());
+        }
         return accountFullResponseDTOMapper.toDTO(accountRepository.save(existing));
     }
 
