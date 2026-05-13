@@ -143,7 +143,7 @@ public class TransactionController {
                     required = true,
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = TransactionRequestDTO.class),
+                            schema = @Schema(implementation = ATMRequestDTO.class),
                             examples = @ExampleObject(
                                     name = "Withdraw request",
                                     value = """
@@ -193,7 +193,7 @@ public class TransactionController {
                     required = true,
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = TransactionRequestDTO.class),
+                            schema = @Schema(implementation = ATMRequestDTO.class),
                             examples = @ExampleObject(
                                     name = "Deposit request",
                                     value = """
