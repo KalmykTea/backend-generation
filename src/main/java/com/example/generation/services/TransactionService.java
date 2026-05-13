@@ -1,15 +1,15 @@
 package com.example.generation.services;
 
-import com.example.generation.dtos.ATMDTO;
+import com.example.generation.dtos.RequestDTOs.ATMRequestDTO;
 import com.example.generation.dtos.RequestDTOs.TransactionRequestDTO;
+import com.example.generation.dtos.ResponseDTOs.ATMResponseDTO;
 import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
 import com.example.generation.entities.Account;
 import com.example.generation.entities.Transaction;
-import com.example.generation.entities.User;
 import com.example.generation.enums.AccountStatus;
 import com.example.generation.enums.AccountType;
 import com.example.generation.enums.TransactionType;
-import com.example.generation.mappers.ATMDTOMapper;
+import com.example.generation.mappers.ResponseDTOMappers.ATMResponseDTOMapper;
 import com.example.generation.mappers.ResponseDTOMappers.TransactionResponseDTOMapper;
 import com.example.generation.repositories.TransactionRepository;
 import org.springframework.data.domain.Page;
@@ -24,11 +24,11 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final AccountService accountService;
     private final TransactionResponseDTOMapper transactionResponseDTOMapper;
-    private final ATMDTOMapper aTMDTOMapper;
+    private final ATMResponseDTOMapper aTMDTOMapper;
 
     public TransactionService(TransactionRepository transactionRepository,
                               AccountService accountService,
-                              TransactionResponseDTOMapper transactionResponseDTOMapper, ATMDTOMapper aTMDTOMapper) {
+                              TransactionResponseDTOMapper transactionResponseDTOMapper, ATMResponseDTOMapper aTMDTOMapper) {
         this.transactionRepository = transactionRepository;
         this.accountService = accountService;
         this.transactionResponseDTOMapper = transactionResponseDTOMapper;
@@ -78,7 +78,7 @@ public class TransactionService {
     }
 
     @Transactional
-    public ATMDTO processATMAction(ATMDTO dto) {
+    public ATMResponseDTO processATMRequest(ATMRequestDTO dto) {
         Account account = accountService.getAccountByIbanOrThrow(dto.getIban());
         switch (dto.getTransactionType()) {
             case WITHDRAWAL:
@@ -91,7 +91,7 @@ public class TransactionService {
         accountService.save(account);
         Transaction transaction = buildTransaction(account, dto);
         transactionRepository.save(transaction);
-        return aTMDTOMapper.toATMDTO(transaction);
+        return aTMDTOMapper.toDTO(transaction);
     }
 
     private void validateAccountForTransfer(Account account, String accountName) {
@@ -114,7 +114,7 @@ public class TransactionService {
     }
 
     //use functional programming later to merge the two build transactions... not sure how to do that yet
-    private Transaction buildTransaction(Account account, ATMDTO dto) {
+    private Transaction buildTransaction(Account account, ATMRequestDTO dto) {
         Transaction transaction = new Transaction();
         transaction.setFromAccount(account);
         transaction.setToAccount(account);

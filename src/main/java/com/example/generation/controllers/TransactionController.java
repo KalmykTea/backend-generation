@@ -1,10 +1,10 @@
 package com.example.generation.controllers;
 
-import com.example.generation.dtos.ATMDTO;
+import com.example.generation.dtos.RequestDTOs.ATMRequestDTO;
 import com.example.generation.dtos.RequestDTOs.TransactionRequestDTO;
+import com.example.generation.dtos.ResponseDTOs.ATMResponseDTO;
 import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
 import com.example.generation.entities.Transaction;
-import com.example.generation.enums.TransactionType;
 import com.example.generation.mappers.ResponseDTOMappers.TransactionResponseDTOMapper;
 import com.example.generation.services.TransactionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -138,7 +138,7 @@ public class TransactionController {
             @ApiResponse(responseCode = "404", description = "Account not found", content = @Content)
     })
     @PreAuthorize("@permissionEvaluator.canUseATM(authentication, #requestDTO)")
-    public ATMDTO withdraw(
+    public ATMResponseDTO withdraw(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(
@@ -157,9 +157,9 @@ public class TransactionController {
                             )
                     )
             )
-            @RequestBody ATMDTO requestDTO
+            @RequestBody ATMRequestDTO requestDTO
     ) {
-        return transactionService.processATMAction(requestDTO);
+        return transactionService.processATMRequest(requestDTO);
     }
 
     @PostMapping("/deposit")
@@ -188,7 +188,7 @@ public class TransactionController {
             @ApiResponse(responseCode = "404", description = "Account not found", content = @Content)
     })
     @PreAuthorize("@permissionEvaluator.canUseATM(authentication, #requestDTO)")
-    public ATMDTO deposit(
+    public ATMResponseDTO deposit(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(
@@ -207,9 +207,9 @@ public class TransactionController {
                             )
                     )
             )
-            @RequestBody ATMDTO requestDTO
+            @RequestBody ATMRequestDTO requestDTO
     ) {
-        return transactionService.processATMAction(requestDTO);
+        return transactionService.processATMRequest(requestDTO);
     }
 
     @GetMapping("")
