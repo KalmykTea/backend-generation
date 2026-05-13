@@ -24,15 +24,15 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final AccountService accountService;
     private final TransactionResponseDTOMapper transactionResponseDTOMapper;
-    private final ATMResponseDTOMapper aTMDTOMapper;
+    private final ATMResponseDTOMapper atmResponseDTOMapper;
 
     public TransactionService(TransactionRepository transactionRepository,
                               AccountService accountService,
-                              TransactionResponseDTOMapper transactionResponseDTOMapper, ATMResponseDTOMapper aTMDTOMapper) {
+                              TransactionResponseDTOMapper transactionResponseDTOMapper, ATMResponseDTOMapper atmResponseDTOMapper) {
         this.transactionRepository = transactionRepository;
         this.accountService = accountService;
         this.transactionResponseDTOMapper = transactionResponseDTOMapper;
-        this.aTMDTOMapper = aTMDTOMapper;
+        this.atmResponseDTOMapper = atmResponseDTOMapper;
     }
 
     // basic stuff, input custom logic according to your user stories
@@ -91,7 +91,7 @@ public class TransactionService {
         accountService.save(account);
         Transaction transaction = buildTransaction(account, dto);
         transactionRepository.save(transaction);
-        return aTMDTOMapper.toDTO(transaction);
+        return atmResponseDTOMapper.toDTO(transaction);
     }
 
     private void validateAccountForTransfer(Account account, String accountName) {

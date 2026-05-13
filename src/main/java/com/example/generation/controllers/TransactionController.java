@@ -120,7 +120,7 @@ public class TransactionController {
                     description = "Withdrawal completed successfully",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = TransactionResponseDTO.class),
+                            schema = @Schema(implementation = ATMResponseDTO.class),
                             examples = @ExampleObject(
                                     name = "Withdraw response",
                                     value = """
@@ -159,6 +159,7 @@ public class TransactionController {
             )
             @RequestBody ATMRequestDTO requestDTO
     ) {
+        requestDTO.setTransactionType(com.example.generation.enums.TransactionType.WITHDRAWAL);
         return transactionService.processATMRequest(requestDTO);
     }
 
@@ -170,7 +171,7 @@ public class TransactionController {
                     description = "Deposit completed successfully",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = TransactionResponseDTO.class),
+                            schema = @Schema(implementation = ATMResponseDTO.class),
                             examples = @ExampleObject(
                                     name = "Deposit response",
                                     value = """
@@ -209,6 +210,7 @@ public class TransactionController {
             )
             @RequestBody ATMRequestDTO requestDTO
     ) {
+        requestDTO.setTransactionType(com.example.generation.enums.TransactionType.DEPOSIT);
         return transactionService.processATMRequest(requestDTO);
     }
 
