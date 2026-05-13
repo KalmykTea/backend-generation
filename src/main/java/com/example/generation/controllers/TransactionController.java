@@ -160,7 +160,6 @@ public class TransactionController {
             )
             @RequestBody ATMRequestDTO requestDTO
     ) {
-        requestDTO.setTransactionType(TransactionType.WITHDRAWAL);
         return transactionService.processATMRequest(requestDTO);
     }
 
@@ -211,7 +210,6 @@ public class TransactionController {
             )
             @RequestBody ATMRequestDTO requestDTO
     ) {
-        requestDTO.setTransactionType(TransactionType.DEPOSIT);
         return transactionService.processATMRequest(requestDTO);
     }
 

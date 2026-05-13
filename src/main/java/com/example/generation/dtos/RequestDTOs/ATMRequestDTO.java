@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 public class ATMRequestDTO {
-    @NotEmpty @NotBlank
+    @NotBlank
     private String iban;
 
     @NotNull
@@ -24,6 +24,5 @@ public class ATMRequestDTO {
     private String description;
 
     @NotNull
-    @Enumerated(EnumType.STRING)
     private TransactionType transactionType;
 }
