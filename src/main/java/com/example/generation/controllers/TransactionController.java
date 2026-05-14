@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -108,7 +109,7 @@ public class TransactionController {
                             )
                     )
             )
-            @RequestBody TransactionRequestDTO transactionRequestDTO
+            @RequestBody @Valid TransactionRequestDTO transactionRequestDTO
     ) {
         return transactionService.processTransfer(transactionRequestDTO);
     }
@@ -128,8 +129,8 @@ public class TransactionController {
                                             {
                                               "iban": "NL13INHO0162593609",
                                               "amount": 250.00,
-                                              "description": "ATM deposit",
-                                              "transactionType": "DEPOSIT"
+                                              "description": "ATM withdrawal",
+                                              "transactionType": "WITHDRAWAL"
                                             }
                                 """
                             )
@@ -151,14 +152,14 @@ public class TransactionController {
                                             {
                                               "iban": "NL13INHO0162593609",
                                               "amount": 250.00,
-                                              "description": "ATM deposit",
-                                              "transactionType": "DEPOSIT"
+                                              "description": "ATM withdrawal",
+                                              "transactionType": "WITHDRAWAL"
                                             }
                                 """
                             )
                     )
             )
-            @RequestBody ATMRequestDTO requestDTO
+            @RequestBody @Valid ATMRequestDTO requestDTO
     ) {
         return transactionService.processATMRequest(requestDTO);
     }
@@ -208,7 +209,7 @@ public class TransactionController {
                             )
                     )
             )
-            @RequestBody ATMRequestDTO requestDTO
+            @RequestBody @Valid ATMRequestDTO requestDTO
     ) {
         return transactionService.processATMRequest(requestDTO);
     }
