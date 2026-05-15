@@ -6,6 +6,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -58,7 +59,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(DailyLimitReachedException.class)
-    public ResponseEntity<ErrorResponse> handleInsufficientBalance(DailyLimitReachedException ex) {
+    public ResponseEntity<ErrorResponse> handleDailyLimitReachedException(DailyLimitReachedException ex) {
         return new ResponseEntity<>(new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(), ex.getMessage(), List.of()
         ),  HttpStatus.BAD_REQUEST);
@@ -69,6 +70,13 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(), ex.getMessage(), List.of()
         ),  HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAuthorizationDenied(AuthorizationDeniedException ex) {
+        return new ResponseEntity<>(new ErrorResponse(
+                HttpStatus.FORBIDDEN.value(), ex.getMessage(), List.of()
+        ),   HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(Exception.class)

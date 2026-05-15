@@ -11,6 +11,7 @@ public interface AccountRepository extends CrudRepository<Account, String> {
 
     List<Account> findByUserFirstNameAndUserLastName(String firstName, String lastName);
 
-
     List<Account> findByUserId(Long userId);
+
+    boolean existsByIbanAndUserId(String iban, Long userId);
 }
