@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +25,7 @@ public class UserController {
 
     @Operation(summary = "Get list of customers pending approval")
     @GetMapping("/pending")
+    @PreAuthorize("hasAuthority('EMPLOYEE')")
     public ResponseEntity<List<UserResponseDTO>> getPendingUsers() {
         List<UserResponseDTO> result = userService.getPendingUsers();
 
@@ -35,6 +37,7 @@ public class UserController {
             description = "Approves a user with Pending status. Creates a Current and Savings account with a unique IBAN"
     )
     @PostMapping("/{id}/approve")
+    @PreAuthorize("hasAuthority('EMPLOYEE')")
     public ResponseEntity<UserResponseDTO> approveUser(@PathVariable Long id) {
         UserResponseDTO result = userService.approveUser(id);
 

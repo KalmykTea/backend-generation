@@ -76,6 +76,7 @@ public class TransactionController {
             @ApiResponse(responseCode = "400", description = "Insufficient balance or daily limit reached", content = @Content),
             @ApiResponse(responseCode = "404", description = "Account not found", content = @Content)
     })
+    @PreAuthorize("hasAuthority('EMPLOYEE')")
     public TransactionResponseDTO transfer(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
