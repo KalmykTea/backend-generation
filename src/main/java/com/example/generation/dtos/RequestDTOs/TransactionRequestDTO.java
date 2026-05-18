@@ -21,8 +21,9 @@ public class TransactionRequestDTO {
     @Valid
     private AccountTransactionRequestDTO toAccount;
 
-    @Valid
-    private UserRequestDTO initiatedBy;
+    //THE USER IS NOW TAKEN FROM THE LOGGED IN USER
+    //@Valid
+    //private UserRequestDTO initiatedBy;
 
     @NotNull
     @Positive

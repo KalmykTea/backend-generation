@@ -6,14 +6,18 @@ import com.example.generation.dtos.ResponseDTOs.ATMResponseDTO;
 import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
 import com.example.generation.entities.Account;
 import com.example.generation.entities.Transaction;
+import com.example.generation.entities.User;
 import com.example.generation.enums.AccountStatus;
 import com.example.generation.enums.AccountType;
+import com.example.generation.enums.Role;
 import com.example.generation.enums.TransactionType;
 import com.example.generation.mappers.ResponseDTOMappers.ATMResponseDTOMapper;
 import com.example.generation.mappers.ResponseDTOMappers.TransactionResponseDTOMapper;
 import com.example.generation.repositories.TransactionRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,23 +62,26 @@ public class TransactionService {
 
     @Transactional
     public TransactionResponseDTO processTransfer(TransactionRequestDTO dto) {
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
         if (dto.getTransactionType().equals(TransactionType.TRANSFER)) {
             Account fromAccount = accountService.getAccountByIbanOrThrow(dto.getFromAccount().getIban());
             validateAccountForTransaction(fromAccount, "Sender account");
+
+            if (currentUser.getRole() == Role.CUSTOMER && !fromAccount.getUser().getId().equals(currentUser.getId())) {
+                throw new AccessDeniedException("You can only transfer from your own account");
+            }
+
             Account toAccount = accountService.getAccountByIbanOrThrow(dto.getToAccount().getIban());
             validateAccountForTransaction(toAccount, "Receiver account");
 
-            if (!fromAccount.getUser().getId().equals(toAccount.getUser().getId())) {
-                if (fromAccount.getAccountType() != AccountType.CHECKING || toAccount.getAccountType() != AccountType.CHECKING) {
-                    throw new IllegalArgumentException("Both accounts need to be of type CHECKING");
-                }
-            }
+            validateTransferAccounts(fromAccount, toAccount);
 
             fromAccount.transact(dto.getAmount(), TransactionType.TRANSFER);
             toAccount.transact(dto.getAmount(), TransactionType.DEPOSIT);
             accountService.save(fromAccount);
             accountService.save(toAccount);
-            Transaction saved = transactionRepository.save(buildTransaction(fromAccount, toAccount, dto));
+            Transaction saved = transactionRepository.save(buildTransaction(fromAccount, toAccount, dto, currentUser));
             return transactionResponseDTOMapper.toDTO(saved);
         }
         else throw new IllegalArgumentException("Transaction type must be transfer");
@@ -107,15 +114,24 @@ public class TransactionService {
         }
     }
 
-    private Transaction buildTransaction(Account fromAccount, Account toAccount, TransactionRequestDTO dto) {
+    private void validateTransferAccounts(Account fromAccount, Account toAccount) {
+        boolean differentUsers = !fromAccount.getUser().getId().equals(toAccount.getUser().getId());
+        boolean notBothChecking = fromAccount.getAccountType() != AccountType.CHECKING ||
+                toAccount.getAccountType() != AccountType.CHECKING;
+
+        if (differentUsers && notBothChecking) {
+            throw new IllegalArgumentException("Both accounts need to be of type CHECKING");
+        }
+    }
+
+    private Transaction buildTransaction(Account fromAccount, Account toAccount, TransactionRequestDTO dto, User initiatedBy) {
         Transaction transaction = new Transaction();
         transaction.setFromAccount(fromAccount);
         transaction.setToAccount(toAccount);
         transaction.setAmount(dto.getAmount());
         transaction.setDescription(dto.getDescription());
         transaction.setTransactionType(dto.getTransactionType());
-        // Temporary - use sender as initiator
-        transaction.setInitiatedBy(fromAccount.getUser());
+        transaction.setInitiatedBy(initiatedBy);
 
         return transaction;
     }
