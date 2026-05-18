@@ -51,6 +51,7 @@ public class AccountController {
     //view all customer accounts
 
     @GetMapping
+    @PreAuthorize("hasRole('EMPLOYEE')")
     @Operation(summary = "Get paginated list of all customer accounts", description = "Retrieve a paginated list of all customer accounts. Restricted to employees.")
     public Map<String, Object> getPaginatedAccounts(
             @RequestParam(defaultValue = "0") int page,

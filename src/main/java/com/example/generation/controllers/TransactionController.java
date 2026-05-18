@@ -299,6 +299,7 @@ public class TransactionController {
     }
 
     @GetMapping("/{userId}")
+    @PreAuthorize("hasRole('CUSTOMER') and @userSecurityService.hasAccessToUser(principal, #userId)")
     @Operation(summary = "Search and filter customer transactions", description = "Retrieve a paginated list of transactions for the authenticated customer with optional filters.")
     public Map<String, Object> getCustomerTransactions(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -341,7 +342,10 @@ public class TransactionController {
                 "totalPages", transactionPage.getTotalPages()
         );
     }
+
+    //get transactions by account IBAN
     @Operation(summary = "Get transactions per account")
+    @PreAuthorize("hasRole('CUSTOMER')")
     @GetMapping("/{iban}/transactions")
     public ResponseEntity<Page<TransactionResponseDTO>> getTransactionsByAccountIBAN(@PathVariable String iban, Pageable pageable) {
         Page<TransactionResponseDTO> result = transactionService.getTransactionsByAccountIBAN(iban, pageable);
