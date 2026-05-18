@@ -18,10 +18,12 @@ public class TransactionRequestDTO {
     private Long id;
 
     @Null(groups= OnDeposit.class)
+    @NotNull(groups= OnWithdrawal.class)
     @Valid
     private AccountTransactionRequestDTO fromAccount;
 
     @Null(groups= OnWithdrawal.class)
+    @NotNull(groups= OnDeposit.class)
     @Valid
     private AccountTransactionRequestDTO toAccount;
 
