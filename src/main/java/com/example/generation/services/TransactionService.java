@@ -94,7 +94,7 @@ public class TransactionService {
         };
 
         Account account = accountService.getAccountByIbanOrThrow(accountDTO.getIban());
-        validateAccountForTransaction(account, String.valueOf(dto.getTransactionType()));
+        validateAccountForTransaction(account, "Account");
         account.transact(dto.getAmount(), dto.getTransactionType());
 
         Transaction transaction = buildTransaction(account, dto);
