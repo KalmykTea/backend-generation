@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.groups.Default;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -128,7 +129,7 @@ public class TransactionController {
                                     name = "Withdraw response",
                                     value = """
                                             {
-                                                  "toAccount": {
+                                                  "fromAccount": {
                                                         "iban": "NL67INHO0398474392",
                                                         "userId": 2,
                                                         "accountType": "CHECKING"
@@ -160,7 +161,7 @@ public class TransactionController {
                                     name = "Withdraw request",
                                     value = """
                                             {
-                                                  "toAccount": {
+                                                  "fromAccount": {
                                                         "iban": "NL67INHO0398474392",
                                                         "userId": 2,
                                                         "accountType": "CHECKING"
@@ -178,7 +179,7 @@ public class TransactionController {
                             )
                     )
             )
-            @RequestBody @Validated(OnWithdrawal.class) TransactionRequestDTO requestDTO
+            @RequestBody @Validated({OnWithdrawal.class, Default.class}) TransactionRequestDTO requestDTO
     ) {
         return transactionService.processATMRequest(requestDTO);
     }
@@ -246,7 +247,7 @@ public class TransactionController {
                             )
                     )
             )
-            @RequestBody @Validated(OnDeposit.class) TransactionRequestDTO requestDTO
+            @RequestBody @Validated({OnDeposit.class, Default.class}) TransactionRequestDTO requestDTO
     ) {
         return transactionService.processATMRequest(requestDTO);
     }
