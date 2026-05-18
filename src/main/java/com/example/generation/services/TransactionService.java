@@ -1,8 +1,7 @@
 package com.example.generation.services;
 
-import com.example.generation.dtos.RequestDTOs.ATMRequestDTO;
+import com.example.generation.dtos.RequestDTOs.AccountTransactionRequestDTO;
 import com.example.generation.dtos.RequestDTOs.TransactionRequestDTO;
-import com.example.generation.dtos.ResponseDTOs.ATMResponseDTO;
 import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
 import com.example.generation.entities.Account;
 import com.example.generation.entities.Transaction;
@@ -11,7 +10,6 @@ import com.example.generation.enums.AccountStatus;
 import com.example.generation.enums.AccountType;
 import com.example.generation.enums.Role;
 import com.example.generation.enums.TransactionType;
-import com.example.generation.mappers.ResponseDTOMappers.ATMResponseDTOMapper;
 import com.example.generation.mappers.ResponseDTOMappers.TransactionResponseDTOMapper;
 import com.example.generation.repositories.TransactionRepository;
 import org.springframework.data.domain.Page;
@@ -28,15 +26,13 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final AccountService accountService;
     private final TransactionResponseDTOMapper transactionResponseDTOMapper;
-    private final ATMResponseDTOMapper atmResponseDTOMapper;
 
     public TransactionService(TransactionRepository transactionRepository,
                               AccountService accountService,
-                              TransactionResponseDTOMapper transactionResponseDTOMapper, ATMResponseDTOMapper atmResponseDTOMapper) {
+                              TransactionResponseDTOMapper transactionResponseDTOMapper) {
         this.transactionRepository = transactionRepository;
         this.accountService = accountService;
         this.transactionResponseDTOMapper = transactionResponseDTOMapper;
-        this.atmResponseDTOMapper = atmResponseDTOMapper;
     }
 
     // basic stuff, input custom logic according to your user stories
@@ -88,24 +84,24 @@ public class TransactionService {
     }
 
     @Transactional
-    public ATMResponseDTO processATMRequest(ATMRequestDTO dto) {
-        Account account = accountService.getAccountByIbanOrThrow(dto.getIban());
-        validateAccountForTransaction(account, "Sender account");
-        switch (dto.getTransactionType()) {
-            case WITHDRAWAL:
-                account.transact(dto.getAmount(), TransactionType.WITHDRAWAL);
-                break;
-            case DEPOSIT:
-                account.transact(dto.getAmount(), TransactionType.DEPOSIT);
-                break;
-            default:
-                throw new IllegalArgumentException("Unsupported ATM transaction type: " + dto.getTransactionType());
-        }
+    public TransactionResponseDTO processATMRequest(TransactionRequestDTO dto) {
+        AccountTransactionRequestDTO accountDTO = switch (dto.getTransactionType()) {
+            case WITHDRAWAL -> dto.getFromAccount();
+            case DEPOSIT    -> dto.getToAccount();
+            default -> throw new IllegalArgumentException(
+                    "Unsupported ATM transaction type: " + dto.getTransactionType()
+            );
+        };
 
-        accountService.save(account);
+        Account account = accountService.getAccountByIbanOrThrow(accountDTO.getIban());
+        validateAccountForTransaction(account, String.valueOf(dto.getTransactionType()));
+        account.transact(dto.getAmount(), dto.getTransactionType());
+
         Transaction transaction = buildTransaction(account, dto);
         transactionRepository.save(transaction);
-        return atmResponseDTOMapper.toDTO(transaction);
+        accountService.save(account);
+
+        return transactionResponseDTOMapper.toDTO(transaction);
     }
 
     private void validateAccountForTransaction(Account account, String accountName) {
@@ -137,18 +133,20 @@ public class TransactionService {
     }
 
     //use functional programming later to merge the two build transactions... not sure how to do that yet
-    private Transaction buildTransaction(Account account, ATMRequestDTO dto) {
+    private Transaction buildTransaction(Account account, TransactionRequestDTO dto) {
         Transaction transaction = new Transaction();
         transaction.setFromAccount(account);
         transaction.setToAccount(account);
         transaction.setAmount(dto.getAmount());
         transaction.setDescription(dto.getDescription());
         transaction.setTransactionType(dto.getTransactionType());
-        transaction.setInitiatedBy(account.getUser());
+        transaction.setInitiatedBy(account.getUser()); //change this
         return transaction;
     }
 
     public Page<Transaction> findTransactionsByUserId(Long userId, Pageable pageable) {
         return transactionRepository.findTransactionsByUserId(userId, pageable);
     }
+
+    //Maybe have one policy for transaction stuff (put shared methods into one policy)
 }

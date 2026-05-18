@@ -1,11 +1,10 @@
 package com.example.generation.controllers;
 
-import com.example.generation.dtos.RequestDTOs.ATMRequestDTO;
 import com.example.generation.dtos.RequestDTOs.TransactionRequestDTO;
-import com.example.generation.dtos.ResponseDTOs.ATMResponseDTO;
 import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
 import com.example.generation.entities.Transaction;
-import com.example.generation.enums.TransactionType;
+import com.example.generation.framework.groups.OnDeposit;
+import com.example.generation.framework.groups.OnWithdrawal;
 import com.example.generation.mappers.ResponseDTOMappers.TransactionResponseDTOMapper;
 import com.example.generation.services.TransactionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,6 +21,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Transactions", description = "Operations for managing transactions")
@@ -141,12 +141,12 @@ public class TransactionController {
             @ApiResponse(responseCode = "404", description = "Account not found", content = @Content)
     })
     @PreAuthorize("@permissionEvaluator.canUseATM(authentication, #requestDTO)")
-    public ATMResponseDTO withdraw(
+    public TransactionResponseDTO withdraw(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = ATMRequestDTO.class),
+                            schema = @Schema(implementation = TransactionRequestDTO.class),
                             examples = @ExampleObject(
                                     name = "Withdraw request",
                                     value = """
@@ -160,7 +160,7 @@ public class TransactionController {
                             )
                     )
             )
-            @RequestBody @Valid ATMRequestDTO requestDTO
+            @RequestBody @Validated(OnWithdrawal.class) TransactionRequestDTO requestDTO
     ) {
         return transactionService.processATMRequest(requestDTO);
     }
@@ -173,7 +173,7 @@ public class TransactionController {
                     description = "Deposit completed successfully",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = ATMResponseDTO.class),
+                            schema = @Schema(implementation = TransactionRequestDTO.class),
                             examples = @ExampleObject(
                                     name = "Deposit response",
                                     value = """
@@ -191,12 +191,12 @@ public class TransactionController {
             @ApiResponse(responseCode = "404", description = "Account not found", content = @Content)
     })
     @PreAuthorize("@permissionEvaluator.canUseATM(authentication, #requestDTO)")
-    public ATMResponseDTO deposit(
+    public TransactionResponseDTO deposit(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = ATMRequestDTO.class),
+                            schema = @Schema(implementation = TransactionRequestDTO.class),
                             examples = @ExampleObject(
                                     name = "Deposit request",
                                     value = """
@@ -210,7 +210,7 @@ public class TransactionController {
                             )
                     )
             )
-            @RequestBody @Valid ATMRequestDTO requestDTO
+            @RequestBody @Validated(OnDeposit.class) TransactionRequestDTO requestDTO
     ) {
         return transactionService.processATMRequest(requestDTO);
     }

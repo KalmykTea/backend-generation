@@ -79,6 +79,7 @@ public class GlobalExceptionHandler {
         ),   HttpStatus.FORBIDDEN);
     }
 
+    //move this to the bottom, return 500
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
         ex.printStackTrace();

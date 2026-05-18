@@ -1,6 +1,8 @@
 package com.example.generation.dtos.RequestDTOs;
 
 import com.example.generation.enums.TransactionType;
+import com.example.generation.framework.groups.OnDeposit;
+import com.example.generation.framework.groups.OnWithdrawal;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.validation.Valid;
@@ -15,15 +17,13 @@ public class TransactionRequestDTO {
     @Null
     private Long id;
 
+    @Null(groups= OnDeposit.class)
     @Valid
     private AccountTransactionRequestDTO fromAccount;
 
+    @Null(groups= OnWithdrawal.class)
     @Valid
     private AccountTransactionRequestDTO toAccount;
-
-    //THE USER IS NOW TAKEN FROM THE LOGGED IN USER
-    //@Valid
-    //private UserRequestDTO initiatedBy;
 
     @NotNull
     @Positive

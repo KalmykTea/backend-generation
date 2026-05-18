@@ -1,6 +1,6 @@
 package com.example.generation.security;
 
-import com.example.generation.dtos.RequestDTOs.ATMRequestDTO;
+import com.example.generation.dtos.RequestDTOs.TransactionRequestDTO;
 import com.example.generation.entities.User;
 import com.example.generation.repositories.AccountRepository;
 import org.springframework.http.HttpStatus;
@@ -34,8 +34,13 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
     // if you don't own the account that you send in the request
     public boolean canUseATM(Authentication authentication, Object targetDomainObject) {
         User user = getAuthenticatedUser(authentication);
-        if (targetDomainObject instanceof ATMRequestDTO atmDTO && isCustomer(authentication)) {
-            return accountRepository.existsByIbanAndUserId(atmDTO.getIban(), user.getId());
+        if (targetDomainObject instanceof TransactionRequestDTO dto && isCustomer(authentication)) {
+            switch (dto.getTransactionType()) {
+                case DEPOSIT:
+                    return accountRepository.existsByIbanAndUserId(dto.getToAccount().getIban(), user.getId());
+                case WITHDRAWAL:
+                    return accountRepository.existsByIbanAndUserId(dto.getFromAccount().getIban(), user.getId());
+            }
         }
         return false;
     }

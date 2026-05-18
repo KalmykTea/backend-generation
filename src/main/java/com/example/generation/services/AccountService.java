@@ -35,7 +35,7 @@ public class AccountService {
     }
 
     public AccountFullResponseDTO update(AccountFullRequestDTO accountFullRequestDTO, String iban) {
-        Account existing = this.getAccountByIbanOrThrow(iban);
+        Account existing = this.getAccountByIbanOrThrow(iban); //use policies
         if (accountFullRequestDTO.getDailyLimit() != null) {
         existing.setDailyLimit(accountFullRequestDTO.getDailyLimit());
         }
