@@ -123,15 +123,24 @@ public class TransactionController {
                     description = "Withdrawal completed successfully",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = ATMResponseDTO.class),
+                            schema = @Schema(implementation = TransactionResponseDTO.class),
                             examples = @ExampleObject(
                                     name = "Withdraw response",
                                     value = """
                                             {
-                                              "iban": "NL13INHO0162593609",
-                                              "amount": 250.00,
-                                              "description": "ATM withdrawal",
-                                              "transactionType": "WITHDRAWAL"
+                                                  "toAccount": {
+                                                        "iban": "NL67INHO0398474392",
+                                                        "userId": 2,
+                                                        "accountType": "CHECKING"
+                                                  },
+                                                  "initiatedBy": {
+                                                        "id": 2,
+                                                        "firstName": "Jan",
+                                                        "lastName": "Jansen"
+                                                  },
+                                                  "amount": 250.00,
+                                                  "description": "Withdraw 250",
+                                                  "transactionType": "WITHDRAWAL"
                                             }
                                 """
                             )
@@ -151,10 +160,19 @@ public class TransactionController {
                                     name = "Withdraw request",
                                     value = """
                                             {
-                                              "iban": "NL13INHO0162593609",
-                                              "amount": 250.00,
-                                              "description": "ATM withdrawal",
-                                              "transactionType": "WITHDRAWAL"
+                                                  "toAccount": {
+                                                        "iban": "NL67INHO0398474392",
+                                                        "userId": 2,
+                                                        "accountType": "CHECKING"
+                                                  },
+                                                  "initiatedBy": {
+                                                        "id": 2,
+                                                        "firstName": "Jan",
+                                                        "lastName": "Jansen"
+                                                  },
+                                                  "amount": 250.00,
+                                                  "description": "Withdraw 250",
+                                                  "transactionType": "WITHDRAWAL"
                                             }
                                 """
                             )
@@ -173,16 +191,25 @@ public class TransactionController {
                     description = "Deposit completed successfully",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = TransactionRequestDTO.class),
+                            schema = @Schema(implementation = TransactionResponseDTO.class),
                             examples = @ExampleObject(
                                     name = "Deposit response",
                                     value = """
                                             {
-                                              "iban": "NL13INHO0162593609",
-                                              "amount": 250.00,
-                                              "description": "ATM deposit",
-                                              "transactionType": "DEPOSIT"
-                                            }
+                                                 "toAccount": {
+                                                     "iban": "NL67INHO0398474392",
+                                                     "userId": 2,
+                                                     "accountType": "CHECKING"
+                                                 },
+                                                 "initiatedBy": {
+                                                     "id": 2,
+                                                     "firstName": "Jan",
+                                                     "lastName": "Jansen"
+                                                 },
+                                                 "amount": 250.00,
+                                                 "description": "Deposit 250",
+                                                 "transactionType": "DEPOSIT"
+                                             }
                                 """
                             )
                     )
@@ -201,11 +228,20 @@ public class TransactionController {
                                     name = "Deposit request",
                                     value = """
                                             {
-                                              "iban": "NL13INHO0162593609",
-                                              "amount": 250.00,
-                                              "description": "ATM deposit",
-                                              "transactionType": "DEPOSIT"
-                                            }
+                                                 "toAccount": {
+                                                     "iban": "NL67INHO0398474392",
+                                                     "userId": 2,
+                                                     "accountType": "CHECKING"
+                                                 },
+                                                 "initiatedBy": {
+                                                     "id": 2,
+                                                     "firstName": "Jan",
+                                                     "lastName": "Jansen"
+                                                 },
+                                                 "amount": 250.00,
+                                                 "description": "Deposit 250",
+                                                 "transactionType": "DEPOSIT"
+                                             }
                                 """
                             )
                     )

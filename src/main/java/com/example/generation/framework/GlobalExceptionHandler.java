@@ -17,16 +17,6 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
-        String name = ex.getName();
-        String type = ex.getRequiredType().getSimpleName();
-        return new ResponseEntity<>(new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(), name + " should be of type " + type , List.of()
-        ),  HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationError(MethodArgumentNotValidException ex) {
         List<Map<String, String>> fieldErrors = ex.getBindingResult().getFieldErrors()
@@ -79,19 +69,18 @@ public class GlobalExceptionHandler {
         ),   HttpStatus.FORBIDDEN);
     }
 
-    //move this to the bottom, return 500
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
-        ex.printStackTrace();
-        return new ResponseEntity<>(new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(), "Unexpected Server Error", List.of()
-        ),  HttpStatus.BAD_REQUEST);
-    }
-
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex) {
         return new ResponseEntity<>(new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(), ex.getMessage(), List.of()
         ),  HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
+        ex.printStackTrace();
+        return new ResponseEntity<>(new ErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(), "Unexpected Server Error", List.of()
+        ),  HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

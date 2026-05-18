@@ -53,7 +53,7 @@ public class Account {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @Column(name = "last_transfer_date")
+    @Column(name = "last_transfer_date", nullable = true)
     private LocalDate lastTransferDate = null;
 
     public void transact(BigDecimal amount, TransactionType type){
