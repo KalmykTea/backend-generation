@@ -21,6 +21,7 @@ import java.util.List;
 @Entity
 @Table(name = "users")
 public class User implements UserDetails {
+    //userDetails is needed for SpringSecurity
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
