@@ -22,17 +22,13 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "account")
 public class Account {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(unique = true, nullable = false)
+    private String iban;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
-
-    @Column(unique = true, nullable = false)
-    private String iban;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "account_type", nullable = false)
@@ -57,7 +53,7 @@ public class Account {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @Column(name = "last_transfer_date", nullable = false)
+    @Column(name = "last_transfer_date")
     private LocalDate lastTransferDate = null;
 
     public void transact(BigDecimal amount, TransactionType type){

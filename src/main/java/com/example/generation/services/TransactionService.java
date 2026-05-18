@@ -1,16 +1,17 @@
 package com.example.generation.services;
 
+import com.example.generation.dtos.RequestDTOs.ATMRequestDTO;
 import com.example.generation.dtos.RequestDTOs.TransactionRequestDTO;
+import com.example.generation.dtos.ResponseDTOs.ATMResponseDTO;
 import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
 import com.example.generation.entities.Account;
 import com.example.generation.entities.Transaction;
 import com.example.generation.enums.AccountStatus;
 import com.example.generation.enums.AccountType;
 import com.example.generation.enums.TransactionType;
+import com.example.generation.mappers.ResponseDTOMappers.ATMResponseDTOMapper;
 import com.example.generation.mappers.ResponseDTOMappers.TransactionResponseDTOMapper;
-import com.example.generation.repositories.AccountRepository;
 import com.example.generation.repositories.TransactionRepository;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -21,15 +22,17 @@ import java.util.Optional;
 @Service
 public class TransactionService {
     private final TransactionRepository transactionRepository;
-    private final AccountRepository accountRepository;
+    private final AccountService accountService;
     private final TransactionResponseDTOMapper transactionResponseDTOMapper;
+    private final ATMResponseDTOMapper atmResponseDTOMapper;
 
     public TransactionService(TransactionRepository transactionRepository,
-                              AccountRepository accountRepository,
-                              TransactionResponseDTOMapper transactionResponseDTOMapper) {
+                              AccountService accountService,
+                              TransactionResponseDTOMapper transactionResponseDTOMapper, ATMResponseDTOMapper atmResponseDTOMapper) {
         this.transactionRepository = transactionRepository;
-        this.accountRepository = accountRepository;
+        this.accountService = accountService;
         this.transactionResponseDTOMapper = transactionResponseDTOMapper;
+        this.atmResponseDTOMapper = atmResponseDTOMapper;
     }
 
     // basic stuff, input custom logic according to your user stories
@@ -45,53 +48,60 @@ public class TransactionService {
         return transactionRepository.save(transaction);
     }
 
-    public Page<TransactionResponseDTO> getTransactionsByAccountId(Long accountId, Pageable pageable) {
-        accountRepository.findById(accountId)
-                .orElseThrow(() -> new EntityNotFoundException("Account not found"));
+    public Page<TransactionResponseDTO> getTransactionsByAccountIBAN(String accountIBAN, Pageable pageable) {
+        accountService.getAccountByIbanOrThrow(accountIBAN);
 
         return transactionRepository
-                .findByAccountId(accountId, pageable)
+                .findByAccountIBAN(accountIBAN, pageable)
                 .map(transactionResponseDTOMapper::toDTO);
     }
 
-    // All steps must succeed together — if anything fails, all changes rolled back
     @Transactional
-    public TransactionResponseDTO createTransaction(TransactionRequestDTO dto) {
-        Account fromAccount = getAccountByIbanOrThrow(dto.getFromAccount().getIban());
-        Account toAccount = getAccountByIbanOrThrow(dto.getToAccount().getIban());
+    public TransactionResponseDTO processTransfer(TransactionRequestDTO dto) {
+        if (dto.getTransactionType().equals(TransactionType.TRANSFER)) {
+            Account fromAccount = accountService.getAccountByIbanOrThrow(dto.getFromAccount().getIban());
+            validateAccountForTransaction(fromAccount, "Sender account");
+            Account toAccount = accountService.getAccountByIbanOrThrow(dto.getToAccount().getIban());
+            validateAccountForTransaction(toAccount, "Receiver account");
 
-        // Validation
-        validateAccountForTransfer(fromAccount, "Sender account");
-        validateAccountForTransfer(toAccount, "Receiver account");
-
-        if (!fromAccount.getUser().getId().equals(toAccount.getUser().getId())) {
-            if(fromAccount.getAccountType() != AccountType.CHECKING || toAccount.getAccountType() != AccountType.CHECKING)
-            {
-                throw new IllegalArgumentException("Both accounts need to be from type checking");
+            if (!fromAccount.getUser().getId().equals(toAccount.getUser().getId())) {
+                if (fromAccount.getAccountType() != AccountType.CHECKING || toAccount.getAccountType() != AccountType.CHECKING) {
+                    throw new IllegalArgumentException("Both accounts need to be of type CHECKING");
+                }
             }
+
+            fromAccount.transact(dto.getAmount(), TransactionType.TRANSFER);
+            toAccount.transact(dto.getAmount(), TransactionType.DEPOSIT);
+            accountService.save(fromAccount);
+            accountService.save(toAccount);
+            Transaction saved = transactionRepository.save(buildTransaction(fromAccount, toAccount, dto));
+            return transactionResponseDTOMapper.toDTO(saved);
+        }
+        else throw new IllegalArgumentException("Transaction type must be transfer");
+    }
+
+    @Transactional
+    public ATMResponseDTO processATMRequest(ATMRequestDTO dto) {
+        Account account = accountService.getAccountByIbanOrThrow(dto.getIban());
+        validateAccountForTransaction(account, "Sender account");
+        switch (dto.getTransactionType()) {
+            case WITHDRAWAL:
+                account.transact(dto.getAmount(), TransactionType.WITHDRAWAL);
+                break;
+            case DEPOSIT:
+                account.transact(dto.getAmount(), TransactionType.DEPOSIT);
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported ATM transaction type: " + dto.getTransactionType());
         }
 
-        // transact() handles balance update and daily limit check
-        fromAccount.transact(dto.getAmount(), TransactionType.TRANSFER);
-        toAccount.transact(dto.getAmount(), TransactionType.DEPOSIT);
-
-        accountRepository.save(fromAccount);
-        accountRepository.save(toAccount);
-
-        Transaction savedTransaction = buildTransaction(fromAccount, toAccount, dto);
-
-        savedTransaction.setId(null);
-        transactionRepository.save(savedTransaction);
-
-        return transactionResponseDTOMapper.toDTO(savedTransaction);
+        accountService.save(account);
+        Transaction transaction = buildTransaction(account, dto);
+        transactionRepository.save(transaction);
+        return atmResponseDTOMapper.toDTO(transaction);
     }
 
-    private Account getAccountByIbanOrThrow(String iban) {
-        return accountRepository.findByIban(iban)
-                .orElseThrow(() -> new EntityNotFoundException("Account with IBAN " + iban + " not found"));
-    }
-
-    private void validateAccountForTransfer(Account account, String accountName) {
+    private void validateAccountForTransaction(Account account, String accountName) {
         if (account.getAccountStatus() != AccountStatus.ACTIVE) {
             throw new IllegalArgumentException(accountName + " is not active");
         }
@@ -107,6 +117,18 @@ public class TransactionService {
         // Temporary - use sender as initiator
         transaction.setInitiatedBy(fromAccount.getUser());
 
+        return transaction;
+    }
+
+    //use functional programming later to merge the two build transactions... not sure how to do that yet
+    private Transaction buildTransaction(Account account, ATMRequestDTO dto) {
+        Transaction transaction = new Transaction();
+        transaction.setFromAccount(account);
+        transaction.setToAccount(account);
+        transaction.setAmount(dto.getAmount());
+        transaction.setDescription(dto.getDescription());
+        transaction.setTransactionType(dto.getTransactionType());
+        transaction.setInitiatedBy(account.getUser());
         return transaction;
     }
 

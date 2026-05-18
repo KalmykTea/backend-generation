@@ -3,26 +3,17 @@ package com.example.generation.dtos.RequestDTOs;
 import com.example.generation.enums.TransactionType;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 
-@Data
-public class TransactionRequestDTO {
-
-    @Null
-    private Long id;
-
-    @Valid
-    private AccountTransactionRequestDTO fromAccount;
-
-    @Valid
-    private AccountTransactionRequestDTO toAccount;
-
-    @Valid
-    private UserRequestDTO initiatedBy;
+@Getter
+@Setter
+public class ATMRequestDTO {
+    @NotBlank
+    private String iban;
 
     @NotNull
     @Positive
@@ -33,6 +24,5 @@ public class TransactionRequestDTO {
     private String description;
 
     @NotNull
-    @Enumerated(EnumType.STRING)
     private TransactionType transactionType;
 }

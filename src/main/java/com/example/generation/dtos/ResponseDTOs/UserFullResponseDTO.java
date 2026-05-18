@@ -5,8 +5,10 @@ import lombok.Value;
 
 @Value
 @Builder
-public class UserResponseDTO {
+public class UserFullResponseDTO {
     long id;
     String firstName;
     String lastName;
+    String email;
+    AddressResponseDTO address;
 }
