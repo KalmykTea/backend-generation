@@ -102,6 +102,7 @@ public class AccountController {
 
     @Operation(summary = "Find user IBAN by first and last name")
     @GetMapping("/search")
+    @PreAuthorize("hasAuthority('CUSTOMER') or hasAuthority('EMPLOYEE')")
     public ResponseEntity<List<String>> getIbanByName(@RequestParam String firstName, @RequestParam String lastName) {
         List<String> ibans = accountService.getIbansByUserName(firstName, lastName);
 
