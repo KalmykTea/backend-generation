@@ -1,31 +1,38 @@
 package com.example.generation.services;
 
-import com.example.generation.dtos.ResponseDTOs.UserFullResponseDTO;
 import com.example.generation.dtos.ResponseDTOs.UserResponseDTO;
 import com.example.generation.entities.User;
 import com.example.generation.enums.UserStatus;
-import com.example.generation.mappers.ResponseDTOMappers.UserFullResponseDTOMapper;
+import com.example.generation.mappers.ResponseDTOMappers.UserResponseDTOMapper;
 import com.example.generation.repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
-public class UserService {
+public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final AccountService accountService;
-    private final UserFullResponseDTOMapper userFullResponseDTOMapper;
+    private final UserResponseDTOMapper userResponseDTOMapper;
 
     public UserService(
             UserRepository userRepository,
             AccountService accountService,
-            UserFullResponseDTOMapper userFullResponseDTOMapper
+            UserResponseDTOMapper userResponseDTOMapper
     ){
         this.userRepository = userRepository;
         this.accountService = accountService;
-        this.userFullResponseDTOMapper = userFullResponseDTOMapper;
+        this.userResponseDTOMapper = userResponseDTOMapper;
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException{
+        return userRepository.findUserByEmail(email).orElseThrow(() -> new UsernameNotFoundException(email));
     }
 
     // basic stuff, input custom logic according to your user stories
@@ -49,7 +56,7 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
-    public UserFullResponseDTO approveUser(Long id) {
+    public UserResponseDTO approveUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
@@ -63,13 +70,15 @@ public class UserService {
         User savedUser = userRepository.save(user);
         accountService.createAccountsForUser(user);
 
-        return userFullResponseDTOMapper.toDTO(savedUser);
+        return userResponseDTOMapper.toDTO(savedUser);
     }
 
-    public List<UserFullResponseDTO> getPendingUsers() {
+    public List<UserResponseDTO> getPendingUsers() {
         return userRepository.findByUserStatus(UserStatus.PENDING)
                 .stream()
-                .map(userFullResponseDTOMapper::toDTO)
+                .map(userResponseDTOMapper::toDTO)
                 .toList();
     }
+
+
 }

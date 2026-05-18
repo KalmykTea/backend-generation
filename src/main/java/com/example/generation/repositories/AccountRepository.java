@@ -18,4 +18,6 @@ public interface AccountRepository extends CrudRepository<Account, String>, JpaR
 
     List<Account> findByUserId(Long userId);
     List<Account> findByUser_Email(String email);
+
+    boolean existsByIbanAndUserId(String iban, Long userId);
 }

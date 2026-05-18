@@ -1,5 +1,5 @@
 package com.example.generation.controllers;
-import com.example.generation.dtos.ResponseDTOs.AccountClosureResponse;
+
 import com.example.generation.dtos.RequestDTOs.AccountFullRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.AccountFullResponseDTO;
 import com.example.generation.entities.Account;
@@ -94,6 +94,7 @@ public class AccountController {
             ),
 
     })
+    @PreAuthorize("hasAuthority('EMPLOYEE')")
     public AccountFullResponseDTO update(
             @Parameter(description = "IBAN of the account to update")
             @PathVariable String iban,
@@ -138,6 +139,7 @@ public class AccountController {
 
     @Operation(summary = "Find user IBAN by first and last name")
     @GetMapping("/search")
+    @PreAuthorize("hasAuthority('CUSTOMER') or hasAuthority('EMPLOYEE')")
     public ResponseEntity<List<String>> getIbanByName(@RequestParam String firstName, @RequestParam String lastName) {
         List<String> ibans = accountService.getIbansByUserName(firstName, lastName);
 

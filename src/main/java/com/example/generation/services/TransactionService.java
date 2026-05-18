@@ -1,15 +1,20 @@
 package com.example.generation.services;
 
+import com.example.generation.dtos.RequestDTOs.ATMRequestDTO;
 import com.example.generation.dtos.RequestDTOs.TransactionRequestDTO;
+import com.example.generation.dtos.ResponseDTOs.ATMResponseDTO;
 import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
 import com.example.generation.entities.Account;
 import com.example.generation.dtos.RequestDTOs.TransactionFilterRequest;
 import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
 import com.example.generation.entities.Account;
 import com.example.generation.entities.Transaction;
+import com.example.generation.entities.User;
 import com.example.generation.enums.AccountStatus;
 import com.example.generation.enums.AccountType;
+import com.example.generation.enums.Role;
 import com.example.generation.enums.TransactionType;
+import com.example.generation.mappers.ResponseDTOMappers.ATMResponseDTOMapper;
 import com.example.generation.mappers.ResponseDTOMappers.TransactionResponseDTOMapper;
 import com.example.generation.entities.User;
 import com.example.generation.mappers.ResponseDTOMappers.TransactionResponseDTOMapper;
@@ -23,6 +28,8 @@ import org.hibernate.Session;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,8 +45,12 @@ public class TransactionService {
     private final EntityManager entityManager;
     private final UserRepository userRepository;
     private final AccountService accountService;
+    private final TransactionResponseDTOMapper transactionResponseDTOMapper;
+    private final ATMResponseDTOMapper atmResponseDTOMapper;
 
     public TransactionService(TransactionRepository transactionRepository,
+                              AccountService accountService,
+                              TransactionResponseDTOMapper transactionResponseDTOMapper, ATMResponseDTOMapper atmResponseDTOMapper) {
                               AccountRepository accountRepository,
                               UserRepository userRepository,
                               TransactionResponseDTOMapper transactionResponseDTOMapper,
@@ -51,6 +62,8 @@ public class TransactionService {
         this.transactionResponseDTOMapper = transactionResponseDTOMapper;
         this.entityManager = entityManager;
         this.accountService = accountService;
+        this.transactionResponseDTOMapper = transactionResponseDTOMapper;
+        this.atmResponseDTOMapper = atmResponseDTOMapper;
     }
 
     @Transactional(readOnly = true)
@@ -105,65 +118,90 @@ public class TransactionService {
     }
 
     @Transactional
-    public TransactionResponseDTO processTransaction(TransactionRequestDTO dto, TransactionType type) {
-        Account fromAccount = accountService.getAccountByIbanOrThrow(dto.getFromAccount().getIban());
-        validateAccountForTransfer(fromAccount, "Sender account");
+    public TransactionResponseDTO processTransfer(TransactionRequestDTO dto) {
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        Transaction transaction = switch (type) {
-            case TRANSFER  -> processTransfer(dto, fromAccount);
-            case WITHDRAWAL  -> processWithdraw(dto, fromAccount);
-            case DEPOSIT   -> processDeposit(dto, fromAccount);
-        };
+        if (dto.getTransactionType().equals(TransactionType.TRANSFER)) {
+            Account fromAccount = accountService.getAccountByIbanOrThrow(dto.getFromAccount().getIban());
+            validateAccountForTransaction(fromAccount, "Sender account");
 
-        Transaction saved = transactionRepository.save(transaction);
-        return transactionResponseDTOMapper.toDTO(saved);
+            if (currentUser.getRole() == Role.CUSTOMER && !fromAccount.getUser().getId().equals(currentUser.getId())) {
+                throw new AccessDeniedException("You can only transfer from your own account");
+            }
+
+            Account toAccount = accountService.getAccountByIbanOrThrow(dto.getToAccount().getIban());
+            validateAccountForTransaction(toAccount, "Receiver account");
+
+            validateTransferAccounts(fromAccount, toAccount);
+
+            fromAccount.transact(dto.getAmount(), TransactionType.TRANSFER);
+            toAccount.transact(dto.getAmount(), TransactionType.DEPOSIT);
+            accountService.save(fromAccount);
+            accountService.save(toAccount);
+            Transaction saved = transactionRepository.save(buildTransaction(fromAccount, toAccount, dto, currentUser));
+            return transactionResponseDTOMapper.toDTO(saved);
+        }
+        else throw new IllegalArgumentException("Transaction type must be transfer");
     }
 
-    private Transaction processTransfer(TransactionRequestDTO dto, Account fromAccount) {
-        Account toAccount = accountService.getAccountByIbanOrThrow(dto.getToAccount().getIban());
-        validateAccountForTransfer(toAccount, "Receiver account");
-
-        if (!fromAccount.getUser().getId().equals(toAccount.getUser().getId())) {
-            if (fromAccount.getAccountType() != AccountType.CHECKING || toAccount.getAccountType() != AccountType.CHECKING) {
-                throw new IllegalArgumentException("Both accounts need to be of type CHECKING");
-            }
+    @Transactional
+    public ATMResponseDTO processATMRequest(ATMRequestDTO dto) {
+        Account account = accountService.getAccountByIbanOrThrow(dto.getIban());
+        validateAccountForTransaction(account, "Sender account");
+        switch (dto.getTransactionType()) {
+            case WITHDRAWAL:
+                account.transact(dto.getAmount(), TransactionType.WITHDRAWAL);
+                break;
+            case DEPOSIT:
+                account.transact(dto.getAmount(), TransactionType.DEPOSIT);
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported ATM transaction type: " + dto.getTransactionType());
         }
 
-        fromAccount.transact(dto.getAmount(), TransactionType.TRANSFER);
-        toAccount.transact(dto.getAmount(), TransactionType.DEPOSIT);
-        accountService.save(fromAccount);
-        accountService.save(toAccount);
-        return buildTransaction(fromAccount, toAccount, dto);
+        accountService.save(account);
+        Transaction transaction = buildTransaction(account, dto);
+        transactionRepository.save(transaction);
+        return atmResponseDTOMapper.toDTO(transaction);
     }
 
-    private Transaction processWithdraw(TransactionRequestDTO dto, Account fromAccount) {
-        fromAccount.transact(dto.getAmount(), TransactionType.WITHDRAWAL);
-        accountService.save(fromAccount);
-        return buildTransaction(fromAccount, fromAccount, dto);
-    }
-
-    private Transaction processDeposit(TransactionRequestDTO dto, Account fromAccount) {
-        fromAccount.transact(dto.getAmount(), TransactionType.DEPOSIT);
-        accountService.save(fromAccount);
-        return buildTransaction(fromAccount, fromAccount, dto);
-    }
-
-    private void validateAccountForTransfer(Account account, String accountName) {
+    private void validateAccountForTransaction(Account account, String accountName) {
         if (account.getAccountStatus() != AccountStatus.ACTIVE) {
             throw new IllegalArgumentException(accountName + " is not active");
         }
     }
 
-    private Transaction buildTransaction(Account fromAccount, Account toAccount, TransactionRequestDTO dto) {
+    private void validateTransferAccounts(Account fromAccount, Account toAccount) {
+        boolean differentUsers = !fromAccount.getUser().getId().equals(toAccount.getUser().getId());
+        boolean notBothChecking = fromAccount.getAccountType() != AccountType.CHECKING ||
+                toAccount.getAccountType() != AccountType.CHECKING;
+
+        if (differentUsers && notBothChecking) {
+            throw new IllegalArgumentException("Both accounts need to be of type CHECKING");
+        }
+    }
+
+    private Transaction buildTransaction(Account fromAccount, Account toAccount, TransactionRequestDTO dto, User initiatedBy) {
         Transaction transaction = new Transaction();
         transaction.setFromAccount(fromAccount);
         transaction.setToAccount(toAccount);
         transaction.setAmount(dto.getAmount());
         transaction.setDescription(dto.getDescription());
         transaction.setTransactionType(dto.getTransactionType());
-        // Temporary - use sender as initiator
-        transaction.setInitiatedBy(fromAccount.getUser());
+        transaction.setInitiatedBy(initiatedBy);
 
+        return transaction;
+    }
+
+    //use functional programming later to merge the two build transactions... not sure how to do that yet
+    private Transaction buildTransaction(Account account, ATMRequestDTO dto) {
+        Transaction transaction = new Transaction();
+        transaction.setFromAccount(account);
+        transaction.setToAccount(account);
+        transaction.setAmount(dto.getAmount());
+        transaction.setDescription(dto.getDescription());
+        transaction.setTransactionType(dto.getTransactionType());
+        transaction.setInitiatedBy(account.getUser());
         return transaction;
     }
 

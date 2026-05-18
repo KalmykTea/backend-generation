@@ -1,6 +1,8 @@
 package com.example.generation.controllers;
 
+import com.example.generation.dtos.RequestDTOs.ATMRequestDTO;
 import com.example.generation.dtos.RequestDTOs.TransactionRequestDTO;
+import com.example.generation.dtos.ResponseDTOs.ATMResponseDTO;
 import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
 import com.example.generation.entities.Transaction;
 import com.example.generation.enums.TransactionType;
@@ -16,11 +18,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -85,6 +89,7 @@ public class TransactionController {
             @ApiResponse(responseCode = "400", description = "Insufficient balance or daily limit reached", content = @Content),
             @ApiResponse(responseCode = "404", description = "Account not found", content = @Content)
     })
+    @PreAuthorize("hasAuthority('EMPLOYEE') or hasAuthority('CUSTOMER')")
     public TransactionResponseDTO transfer(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
@@ -118,9 +123,9 @@ public class TransactionController {
                             )
                     )
             )
-            @RequestBody TransactionRequestDTO transactionRequestDTO
+            @RequestBody @Valid TransactionRequestDTO transactionRequestDTO
     ) {
-        return transactionService.processTransaction(transactionRequestDTO, TransactionType.TRANSFER);
+        return transactionService.processTransfer(transactionRequestDTO);
     }
 
     @PostMapping("/withdraw")
@@ -131,26 +136,12 @@ public class TransactionController {
                     description = "Withdrawal completed successfully",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = TransactionResponseDTO.class),
+                            schema = @Schema(implementation = ATMResponseDTO.class),
                             examples = @ExampleObject(
                                     name = "Withdraw response",
                                     value = """
                                             {
-                                              "fromAccount": {
-                                                "iban": "NL13INHO0162593609",
-                                                "userId": 2,
-                                                "accountType": "CHECKING"
-                                              },
-                                              "toAccount": {
-                                                "iban": "NL13INHO0162593609",
-                                                "userId": 2,
-                                                "accountType": "CHECKING"
-                                              },
-                                              "initiatedBy": {
-                                                "id": 2,
-                                                "firstName": "Jan",
-                                                "lastName": "Jansen"
-                                              },
+                                              "iban": "NL13INHO0162593609",
                                               "amount": 250.00,
                                               "description": "ATM withdrawal",
                                               "transactionType": "WITHDRAWAL"
@@ -162,31 +153,18 @@ public class TransactionController {
             @ApiResponse(responseCode = "400", description = "Insufficient balance or daily limit reached", content = @Content),
             @ApiResponse(responseCode = "404", description = "Account not found", content = @Content)
     })
-    public TransactionResponseDTO withdraw(
+    @PreAuthorize("@permissionEvaluator.canUseATM(authentication, #requestDTO)")
+    public ATMResponseDTO withdraw(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = TransactionRequestDTO.class),
+                            schema = @Schema(implementation = ATMRequestDTO.class),
                             examples = @ExampleObject(
                                     name = "Withdraw request",
                                     value = """
                                             {
-                                              "fromAccount": {
-                                                "iban": "NL13INHO0162593609",
-                                                "userId": 2,
-                                                "accountType": "CHECKING"
-                                              },
-                                              "toAccount": {
-                                                "iban": "NL13INHO0162593609",
-                                                "userId": 2,
-                                                "accountType": "CHECKING"
-                                              },
-                                              "initiatedBy": {
-                                                "id": 2,
-                                                "firstName": "Jan",
-                                                "lastName": "Jansen"
-                                              },
+                                              "iban": "NL13INHO0162593609",
                                               "amount": 250.00,
                                               "description": "ATM withdrawal",
                                               "transactionType": "WITHDRAWAL"
@@ -195,9 +173,9 @@ public class TransactionController {
                             )
                     )
             )
-            @RequestBody TransactionRequestDTO transactionRequestDTO
+            @RequestBody @Valid ATMRequestDTO requestDTO
     ) {
-        return transactionService.processTransaction(transactionRequestDTO, TransactionType.WITHDRAWAL);
+        return transactionService.processATMRequest(requestDTO);
     }
 
     @PostMapping("/deposit")
@@ -208,26 +186,12 @@ public class TransactionController {
                     description = "Deposit completed successfully",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = TransactionResponseDTO.class),
+                            schema = @Schema(implementation = ATMResponseDTO.class),
                             examples = @ExampleObject(
                                     name = "Deposit response",
                                     value = """
                                             {
-                                              "fromAccount": {
-                                                "iban": "NL13INHO0162593609",
-                                                "userId": 2,
-                                                "accountType": "CHECKING"
-                                              },
-                                              "toAccount": {
-                                                "iban": "NL13INHO0162593609",
-                                                "userId": 2,
-                                                "accountType": "CHECKING"
-                                              },
-                                              "initiatedBy": {
-                                                "id": 2,
-                                                "firstName": "Jan",
-                                                "lastName": "Jansen"
-                                              },
+                                              "iban": "NL13INHO0162593609",
                                               "amount": 250.00,
                                               "description": "ATM deposit",
                                               "transactionType": "DEPOSIT"
@@ -239,31 +203,18 @@ public class TransactionController {
             @ApiResponse(responseCode = "400", description = "Insufficient balance or daily limit reached", content = @Content),
             @ApiResponse(responseCode = "404", description = "Account not found", content = @Content)
     })
-    public TransactionResponseDTO deposit(
+    @PreAuthorize("@permissionEvaluator.canUseATM(authentication, #requestDTO)")
+    public ATMResponseDTO deposit(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = TransactionRequestDTO.class),
+                            schema = @Schema(implementation = ATMRequestDTO.class),
                             examples = @ExampleObject(
                                     name = "Deposit request",
                                     value = """
                                             {
-                                              "fromAccount": {
-                                                "iban": "NL13INHO0162593609",
-                                                "userId": 2,
-                                                "accountType": "CHECKING"
-                                              },
-                                              "toAccount": {
-                                                "iban": "NL13INHO0162593609",
-                                                "userId": 2,
-                                                "accountType": "CHECKING"
-                                              },
-                                              "initiatedBy": {
-                                                "id": 2,
-                                                "firstName": "Jan",
-                                                "lastName": "Jansen"
-                                              },
+                                              "iban": "NL13INHO0162593609",
                                               "amount": 250.00,
                                               "description": "ATM deposit",
                                               "transactionType": "DEPOSIT"
@@ -272,12 +223,12 @@ public class TransactionController {
                             )
                     )
             )
-            @RequestBody TransactionRequestDTO transactionRequestDTO
+            @RequestBody @Valid ATMRequestDTO requestDTO
     ) {
-        return transactionService.processTransaction(transactionRequestDTO, TransactionType.DEPOSIT);
+        return transactionService.processATMRequest(requestDTO);
     }
 
-    @GetMapping("")
+    @GetMapping("/user")
     @Operation(summary = "Get transactions by user", description = "Returns all transactions paginated belonging to a specific user")
     @ApiResponses(value = {
             @ApiResponse(
@@ -291,6 +242,7 @@ public class TransactionController {
                     content = @Content
             )
     })
+    @PreAuthorize("hasAuthority('EMPLOYEE')")
     public Page<TransactionResponseDTO> getTransactionsByUserId(
             @RequestParam Long userId, @PageableDefault(size = 10) Pageable pageable
     ) {
