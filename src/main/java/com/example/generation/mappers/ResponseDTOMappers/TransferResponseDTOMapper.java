@@ -1,16 +1,14 @@
 package com.example.generation.mappers.ResponseDTOMappers;
 
-import com.example.generation.dtos.ResponseDTOs.AccountTransactionResponseDTO;
-import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
-import com.example.generation.dtos.ResponseDTOs.UserResponseDTO;
+import com.example.generation.dtos.ResponseDTOs.TransferResponseDTO;
 import com.example.generation.entities.Transaction;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring", uses = {AccountTransactionResponseDTOMapper.class, UserResponseDTOMapper.class})
-public interface TransactionResponseDTOMapper {
+public interface TransferResponseDTOMapper {
     @Mapping(source = "fromAccount.user.id", target = "fromAccount.userId")
     @Mapping(source = "toAccount.user.id", target = "toAccount.userId")
     @Mapping(source = "initiatedBy", target = "initiatedBy")
-    TransactionResponseDTO toDTO(Transaction transaction);
+    TransferResponseDTO toDTO(Transaction transaction);
 }
