@@ -1,14 +1,12 @@
 package com.example.generation.controllers;
 
 import com.example.generation.dtos.RequestDTOs.ATMRequestDTO;
-import com.example.generation.dtos.RequestDTOs.TransactionRequestDTO;
-import com.example.generation.dtos.ResponseDTOs.ATMResponseDTO;
-import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
-import com.example.generation.entities.Transaction;
-import com.example.generation.enums.TransactionType;
-import com.example.generation.mappers.ResponseDTOMappers.TransactionResponseDTOMapper;
 import com.example.generation.dtos.RequestDTOs.TransactionFilterRequest;
-import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
+import com.example.generation.dtos.RequestDTOs.TransferRequestDTO;
+import com.example.generation.dtos.ResponseDTOs.ATMResponseDTO;
+import com.example.generation.dtos.ResponseDTOs.TransferResponseDTO;
+import com.example.generation.entities.Transaction;
+import com.example.generation.mappers.ResponseDTOMappers.TransferResponseDTOMapper;
 import com.example.generation.services.TransactionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -39,14 +37,14 @@ import java.util.Map;
 
 @Tag(name = "Transactions", description = "Operations for managing transactions")
 @RestController
-@RequestMapping("/transactions")
+@RequestMapping("transactions")
 public class TransactionController {
     final private TransactionService transactionService;
-    private final TransactionResponseDTOMapper transactionResponseDTOMapper;
+    private final TransferResponseDTOMapper transferResponseDTOMapper;
 
-    public TransactionController(TransactionService transactionService,  TransactionResponseDTOMapper transactionResponseDTOMapper) {
+    public TransactionController(TransactionService transactionService,  TransferResponseDTOMapper transferResponseDTOMapper) {
         this.transactionService = transactionService;
-        this.transactionResponseDTOMapper = transactionResponseDTOMapper;
+        this.transferResponseDTOMapper = transferResponseDTOMapper;
     }
 
     @PostMapping("/transfer")
@@ -57,31 +55,23 @@ public class TransactionController {
                     description = "Transfer completed successfully",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = TransactionResponseDTO.class),
+                            schema = @Schema(implementation = TransferResponseDTO.class),
                             examples = @ExampleObject(
                                     name = "Transfer response",
                                     value = """
-                                {
-                                  "id": 1,
-                                  "fromAccount": {
-                                    "iban": "NL13INHO0162593609",
-                                    "userId": 2,
-                                    "accountType": "CHECKING"
-                                  },
-                                  "toAccount": {
-                                    "iban": "NL18INHO0398474392",
-                                    "userId": 4,
-                                    "accountType": "CHECKING"
-                                  },
-                                  "initiatedBy": {
-                                    "id": 2,
-                                    "firstName": "Jan",
-                                    "lastName": "Jansen"
-                                  },
-                                  "amount": 250.00,
-                                  "description": "Gift money :)",
-                                  "transactionType": "TRANSFER"
-                                }
+                                            {
+                                                 "amount": 250.00,
+                                                 "description": "Gift money :)",
+                                                 "fromAccountIban": "NL67INHO0398474392",
+                                                 "id": 10,
+                                                 "initiatedBy": {
+                                                     "firstName": "Jane",
+                                                     "id": 2,
+                                                     "lastName": "Doe"
+                                                 },
+                                                 "toAccountIban": "NL69INHO0398474392",
+                                                 "transactionType": "TRANSFER"
+                                             }
                                 """
                             )
                     )
@@ -90,42 +80,30 @@ public class TransactionController {
             @ApiResponse(responseCode = "404", description = "Account not found", content = @Content)
     })
     @PreAuthorize("hasAuthority('EMPLOYEE') or hasAuthority('CUSTOMER')")
-    public TransactionResponseDTO transfer(
+    public TransferResponseDTO transfer(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = TransactionRequestDTO.class),
+                            schema = @Schema(implementation = TransferRequestDTO.class),
                             examples = @ExampleObject(
                                     name = "Transfer request",
                                     value = """
-                                {
-                                  "fromAccount": {
-                                    "iban": "NL13INHO0162593609",
-                                    "userId": 2,
-                                    "accountType": "CHECKING"
-                                  },
-                                  "toAccount": {
-                                    "iban": "NL18INHO0398474392",
-                                    "userId": 4,
-                                    "accountType": "CHECKING"
-                                  },
-                                  "initiatedBy": {
-                                    "id": 2,
-                                    "firstName": "Jan",
-                                    "lastName": "Jansen"
-                                  },
-                                  "amount": 250.00,
-                                  "description": "Gift money :)",
-                                  "transactionType": "TRANSFER"
-                                }
+                                            {
+                                                "id" : null,
+                                                "fromAccountIban": "NL67INHO0398474392",
+                                                "toAccountIban": "NL69INHO0398474392",
+                                                "amount": 250.00,
+                                                "description": "Gift money :)",
+                                                "transactionType": "TRANSFER"
+                                            }
                                 """
                             )
                     )
             )
-            @RequestBody @Valid TransactionRequestDTO transactionRequestDTO
+            @RequestBody @Valid TransferRequestDTO transferRequestDTO
     ) {
-        return transactionService.processTransfer(transactionRequestDTO);
+        return transactionService.processTransfer(transferRequestDTO);
     }
 
     @PostMapping("/withdraw")
@@ -234,7 +212,7 @@ public class TransactionController {
             @ApiResponse(
                     responseCode = "200",
                     description = "Transactions retrieved successfully",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = TransactionResponseDTO.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = TransferResponseDTO.class))
             ),
             @ApiResponse(
                     responseCode = "404",
@@ -243,11 +221,11 @@ public class TransactionController {
             )
     })
     @PreAuthorize("hasAuthority('EMPLOYEE')")
-    public Page<TransactionResponseDTO> getTransactionsByUserId(
+    public Page<TransferResponseDTO> getTransactionsByUserId(
             @RequestParam Long userId, @PageableDefault(size = 10) Pageable pageable
     ) {
         Page<Transaction> transactions = transactionService.findTransactionsByUserId(userId, pageable);
-        return transactions.map(transactionResponseDTOMapper::toDTO);
+        return transactions.map(transferResponseDTOMapper::toDTO);
     }
 
     @GetMapping("/{userId}")
@@ -266,7 +244,7 @@ public class TransactionController {
 
         TransactionFilterRequest filters = new TransactionFilterRequest(startDate, endDate, amountLt, amountGt, amountEq, iban);
         Pageable pageable = PageRequest.of(page, size);
-        Page<TransactionResponseDTO> transactionPage = transactionService.getFilteredTransactions(filters, pageable, userId);
+        Page<TransferResponseDTO> transactionPage = transactionService.getFilteredTransactions(filters, pageable, userId);
 
         return Map.of(
                 "content", transactionPage.getContent(),
@@ -284,7 +262,7 @@ public class TransactionController {
             @RequestParam(defaultValue = "20") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<TransactionResponseDTO> transactionPage = transactionService.getPaginatedTransactions(pageable);
+        Page<TransferResponseDTO> transactionPage = transactionService.getPaginatedTransactions(pageable);
 
         return Map.of(
                 "content", transactionPage.getContent(),
@@ -297,11 +275,10 @@ public class TransactionController {
 
     //get transactions by account IBAN
     @Operation(summary = "Get transactions per account")
-    @PreAuthorize("hasRole('CUSTOMER')")
     @GetMapping("/{iban}/transactions")
-    public ResponseEntity<Page<TransactionResponseDTO>> getTransactionsByAccountIBAN(@PathVariable String iban, Pageable pageable) {
-        Page<TransactionResponseDTO> result = transactionService.getTransactionsByAccountIBAN(iban, pageable);
+    public ResponseEntity<Page<TransferResponseDTO>> getTransactionsByAccountIBAN(@PathVariable String iban, Pageable pageable) {
+        Page<TransferResponseDTO> result = transactionService.getTransactionsByAccountIBAN(iban, pageable);
 
-        return new ResponseEntity<Page<TransactionResponseDTO>>(result, HttpStatus.OK);
+        return new ResponseEntity<Page<TransferResponseDTO>>(result, HttpStatus.OK);
     }
 }
