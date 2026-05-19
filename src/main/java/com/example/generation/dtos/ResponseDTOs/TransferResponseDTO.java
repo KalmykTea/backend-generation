@@ -10,8 +10,8 @@ import java.math.BigDecimal;
 @Builder
 public class TransferResponseDTO {
     long id;
-    AccountTransactionResponseDTO fromAccount;
-    AccountTransactionResponseDTO toAccount;
+    String fromAccountIban;
+    String toAccountIban;
     UserResponseDTO initiatedBy;
     BigDecimal amount;
     String description;

@@ -65,14 +65,14 @@ public class TransactionService {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         if (dto.getTransactionType().equals(TransactionType.TRANSFER)) {
-            Account fromAccount = accountService.getAccountByIbanOrThrow(dto.getFromAccount().getIban());
+            Account fromAccount = accountService.getAccountByIbanOrThrow(dto.getFromAccountIban());
             validateAccountForTransaction(fromAccount, "Sender account");
 
             if (currentUser.getRole() == Role.CUSTOMER && !fromAccount.getUser().getId().equals(currentUser.getId())) {
                 throw new AccessDeniedException("You can only transfer from your own account");
             }
 
-            Account toAccount = accountService.getAccountByIbanOrThrow(dto.getToAccount().getIban());
+            Account toAccount = accountService.getAccountByIbanOrThrow(dto.getToAccountIban());
             validateAccountForTransaction(toAccount, "Receiver account");
 
             validateTransferAccounts(fromAccount, toAccount);

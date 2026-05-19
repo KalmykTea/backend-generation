@@ -5,10 +5,9 @@ import com.example.generation.entities.Transaction;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring", uses = {AccountTransactionResponseDTOMapper.class, UserResponseDTOMapper.class})
+@Mapper(componentModel = "spring")
 public interface TransferResponseDTOMapper {
-    @Mapping(source = "fromAccount.user.id", target = "fromAccount.userId")
-    @Mapping(source = "toAccount.user.id", target = "toAccount.userId")
-    @Mapping(source = "initiatedBy", target = "initiatedBy")
+    @Mapping(target="fromAccountIban", source="fromAccount.iban")
+    @Mapping(target="toAccountIban", source="toAccount.iban")
     TransferResponseDTO toDTO(Transaction transaction);
 }

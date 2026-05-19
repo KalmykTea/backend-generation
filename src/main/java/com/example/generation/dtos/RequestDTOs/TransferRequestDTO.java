@@ -1,6 +1,6 @@
 package com.example.generation.dtos.RequestDTOs;
 
-import jakarta.validation.Valid;
+import com.example.generation.framework.annotations.ValidIBAN;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -8,9 +8,9 @@ import lombok.Setter;
 @Setter
 public class TransferRequestDTO extends BaseTransactionRequestDTO {
 
-    @Valid
-    private AccountTransactionRequestDTO fromAccount;
+    @ValidIBAN
+    private String fromAccountIban;
 
-    @Valid
-    private AccountTransactionRequestDTO toAccount;
+    @ValidIBAN
+    private String toAccountIban;
 }
