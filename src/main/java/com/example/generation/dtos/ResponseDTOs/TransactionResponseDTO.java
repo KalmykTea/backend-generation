@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 
 @Value
 @Builder
-public class TransferResponseDTO {
+public class TransactionResponseDTO {
     long id;
     String fromAccountIban;
     String toAccountIban;

@@ -1,9 +1,9 @@
 package com.example.generation.services;
 
 import com.example.generation.dtos.RequestDTOs.ATMRequestDTO;
-import com.example.generation.dtos.RequestDTOs.TransferRequestDTO;
+import com.example.generation.dtos.RequestDTOs.TransactionRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.ATMResponseDTO;
-import com.example.generation.dtos.ResponseDTOs.TransferResponseDTO;
+import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
 import com.example.generation.entities.Account;
 import com.example.generation.entities.Transaction;
 import com.example.generation.entities.User;
@@ -12,7 +12,7 @@ import com.example.generation.enums.AccountType;
 import com.example.generation.enums.Role;
 import com.example.generation.enums.TransactionType;
 import com.example.generation.mappers.ResponseDTOMappers.ATMResponseDTOMapper;
-import com.example.generation.mappers.ResponseDTOMappers.TransferResponseDTOMapper;
+import com.example.generation.mappers.ResponseDTOMappers.TransactionResponseDTOMapper;
 import com.example.generation.repositories.TransactionRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,15 +27,15 @@ import java.util.Optional;
 public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final AccountService accountService;
-    private final TransferResponseDTOMapper transferResponseDTOMapper;
+    private final TransactionResponseDTOMapper transactionResponseDTOMapper;
     private final ATMResponseDTOMapper atmResponseDTOMapper;
 
     public TransactionService(TransactionRepository transactionRepository,
                               AccountService accountService,
-                              TransferResponseDTOMapper transferResponseDTOMapper, ATMResponseDTOMapper atmResponseDTOMapper) {
+                              TransactionResponseDTOMapper transactionResponseDTOMapper, ATMResponseDTOMapper atmResponseDTOMapper) {
         this.transactionRepository = transactionRepository;
         this.accountService = accountService;
-        this.transferResponseDTOMapper = transferResponseDTOMapper;
+        this.transactionResponseDTOMapper = transactionResponseDTOMapper;
         this.atmResponseDTOMapper = atmResponseDTOMapper;
     }
 
@@ -52,16 +52,16 @@ public class TransactionService {
         return transactionRepository.save(transaction);
     }
 
-    public Page<TransferResponseDTO> getTransactionsByAccountIBAN(String accountIBAN, Pageable pageable) {
+    public Page<TransactionResponseDTO> getTransactionsByAccountIBAN(String accountIBAN, Pageable pageable) {
         accountService.getAccountByIbanOrThrow(accountIBAN);
 
         return transactionRepository
                 .findByAccountIBAN(accountIBAN, pageable)
-                .map(transferResponseDTOMapper::toDTO);
+                .map(transactionResponseDTOMapper::toDTO);
     }
 
     @Transactional
-    public TransferResponseDTO processTransfer(TransferRequestDTO dto) {
+    public TransactionResponseDTO processTransfer(TransactionRequestDTO dto) {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         if (dto.getTransactionType().equals(TransactionType.TRANSFER)) {
@@ -82,7 +82,7 @@ public class TransactionService {
             accountService.save(fromAccount);
             accountService.save(toAccount);
             Transaction saved = transactionRepository.save(buildTransaction(fromAccount, toAccount, dto, currentUser));
-            return transferResponseDTOMapper.toDTO(saved);
+            return transactionResponseDTOMapper.toDTO(saved);
         }
         else throw new IllegalArgumentException("Transaction type must be transfer");
     }
@@ -124,7 +124,7 @@ public class TransactionService {
         }
     }
 
-    private Transaction buildTransaction(Account fromAccount, Account toAccount, TransferRequestDTO dto, User initiatedBy) {
+    private Transaction buildTransaction(Account fromAccount, Account toAccount, TransactionRequestDTO dto, User initiatedBy) {
         Transaction transaction = new Transaction();
         transaction.setFromAccount(fromAccount);
         transaction.setToAccount(toAccount);
