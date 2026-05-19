@@ -1,6 +1,7 @@
 package com.example.generation.controllers;
 
 import com.example.generation.dtos.RequestDTOs.ATMRequestDTO;
+import com.example.generation.dtos.RequestDTOs.TransactionFilterRequest;
 import com.example.generation.dtos.RequestDTOs.TransferRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.ATMResponseDTO;
 import com.example.generation.dtos.ResponseDTOs.TransferResponseDTO;
@@ -243,7 +244,7 @@ public class TransactionController {
 
         TransactionFilterRequest filters = new TransactionFilterRequest(startDate, endDate, amountLt, amountGt, amountEq, iban);
         Pageable pageable = PageRequest.of(page, size);
-        Page<TransactionResponseDTO> transactionPage = transactionService.getFilteredTransactions(filters, pageable, userId);
+        Page<TransferResponseDTO> transactionPage = transactionService.getFilteredTransactions(filters, pageable, userId);
 
         return Map.of(
                 "content", transactionPage.getContent(),
@@ -261,7 +262,7 @@ public class TransactionController {
             @RequestParam(defaultValue = "20") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<TransactionResponseDTO> transactionPage = transactionService.getPaginatedTransactions(pageable);
+        Page<TransferResponseDTO> transactionPage = transactionService.getPaginatedTransactions(pageable);
 
         return Map.of(
                 "content", transactionPage.getContent(),

@@ -1,6 +1,7 @@
 package com.example.generation.controllers;
 
 import com.example.generation.dtos.RequestDTOs.AccountFullRequestDTO;
+import com.example.generation.dtos.ResponseDTOs.AccountClosureResponse;
 import com.example.generation.dtos.ResponseDTOs.AccountFullResponseDTO;
 import com.example.generation.entities.Account;
 import com.example.generation.framework.annotations.ValidIBAN;

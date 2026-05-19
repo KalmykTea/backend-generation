@@ -6,8 +6,6 @@ import com.example.generation.dtos.ResponseDTOs.ATMResponseDTO;
 import com.example.generation.dtos.ResponseDTOs.TransferResponseDTO;
 import com.example.generation.entities.Account;
 import com.example.generation.dtos.RequestDTOs.TransactionFilterRequest;
-import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
-import com.example.generation.entities.Account;
 import com.example.generation.entities.Transaction;
 import com.example.generation.entities.User;
 import com.example.generation.enums.AccountStatus;
@@ -16,9 +14,6 @@ import com.example.generation.enums.Role;
 import com.example.generation.enums.TransactionType;
 import com.example.generation.mappers.ResponseDTOMappers.ATMResponseDTOMapper;
 import com.example.generation.mappers.ResponseDTOMappers.TransferResponseDTOMapper;
-import com.example.generation.mappers.ResponseDTOMappers.TransactionResponseDTOMapper;
-import com.example.generation.entities.User;
-import com.example.generation.mappers.ResponseDTOMappers.TransactionResponseDTOMapper;
 import com.example.generation.repositories.AccountRepository;
 import com.example.generation.repositories.TransactionRepository;
 import org.springframework.data.domain.Page;
@@ -42,7 +37,6 @@ import java.util.Optional;
 public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final AccountRepository accountRepository;
-    private final TransactionResponseDTOMapper transactionResponseDTOMapper;
     private final EntityManager entityManager;
     private final UserRepository userRepository;
     private final AccountService accountService;
@@ -51,11 +45,15 @@ public class TransactionService {
 
     public TransactionService(TransactionRepository transactionRepository,
                               AccountService accountService,
-                              TransferResponseDTOMapper transferResponseDTOMapper, ATMResponseDTOMapper atmResponseDTOMapper) {
+                              TransferResponseDTOMapper transferResponseDTOMapper,
+                              ATMResponseDTOMapper atmResponseDTOMapper,
+                              AccountRepository accountRepository,
+                              UserRepository userRepository,
+                              EntityManager entityManager
+    ) {
         this.transactionRepository = transactionRepository;
         this.accountRepository = accountRepository;
         this.userRepository = userRepository;
-        this.transactionResponseDTOMapper = transactionResponseDTOMapper;
         this.entityManager = entityManager;
         this.accountService = accountService;
         this.transferResponseDTOMapper = transferResponseDTOMapper;
@@ -173,6 +171,36 @@ public class TransactionService {
 
     public Page<Transaction> findTransactionsByUserId(Long userId, Pageable pageable) {
         return transactionRepository.findTransactionsByUserId(userId, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TransferResponseDTO> getFilteredTransactions(TransactionFilterRequest filters, Pageable pageable, Long userId) {
+//        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = this.userRepository.findById(userId).orElseThrow();
+//        if (!user.getId().equals(userId)) {
+//            throw new IllegalArgumentException("User is not authorized to view transactions for this user.");
+//        }
+        List<Account> userAccounts = accountRepository.findByUserId(userId);
+        List<String> accountIbans = userAccounts.stream().map(Account::getIban).toList();
+
+        if (accountIbans.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        Session session = enableFilters(filters);
+
+        session.enableFilter("userAccountsFilter")
+                .setParameterList("accountIbans", accountIbans);
+
+        Page<Transaction> transactions = transactionRepository.findAll(pageable);
+        this.cleanFilters(session);
+
+        return transactions.map(transferResponseDTOMapper::toDTO);
+    }
+
+    public Page<TransferResponseDTO> getPaginatedTransactions(Pageable pageable) {
+        Page<Transaction> transactions = transactionRepository.findAll(pageable);
+        return transactions.map(transferResponseDTOMapper::toDTO);
     }
 
     private Session enableFilters(TransactionFilterRequest filters)
