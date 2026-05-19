@@ -6,7 +6,11 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class ATMRequestDTO extends BaseTransactionRequestDTO {
+public class TransferRequestDTO extends BaseTransactionRequestDTO {
+
     @ValidIBAN
-    private String iban;
+    private String fromAccountIban;
+
+    @ValidIBAN
+    private String toAccountIban;
 }
