@@ -1,13 +1,12 @@
 package com.example.generation.controllers;
 
-import com.example.generation.dtos.ResponseDTOs.UserFullResponseDTO;
 import com.example.generation.dtos.ResponseDTOs.UserResponseDTO;
-import com.example.generation.services.AddressService;
 import com.example.generation.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,19 +16,18 @@ import java.util.List;
 @RequestMapping("users")
 public class UserController {
     final private UserService userService;
-    final private AddressService addressService;
 
-    public UserController(UserService userService, AddressService addressService) {
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.addressService = addressService;
     }
 
     // controller methods based on user stories with swagger doc code go here
 
     @Operation(summary = "Get list of customers pending approval")
     @GetMapping("/pending")
-    public ResponseEntity<List<UserFullResponseDTO>> getPendingUsers() {
-        List<UserFullResponseDTO> result = userService.getPendingUsers();
+    @PreAuthorize("hasAuthority('EMPLOYEE')")
+    public ResponseEntity<List<UserResponseDTO>> getPendingUsers() {
+        List<UserResponseDTO> result = userService.getPendingUsers();
 
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
@@ -39,8 +37,9 @@ public class UserController {
             description = "Approves a user with Pending status. Creates a Current and Savings account with a unique IBAN"
     )
     @PostMapping("/{id}/approve")
-    public ResponseEntity<UserFullResponseDTO> approveUser(@PathVariable Long id) {
-        UserFullResponseDTO result = userService.approveUser(id);
+    @PreAuthorize("hasAuthority('EMPLOYEE')")
+    public ResponseEntity<UserResponseDTO> approveUser(@PathVariable Long id) {
+        UserResponseDTO result = userService.approveUser(id);
 
         return new ResponseEntity<>(result, HttpStatus.OK);
     }

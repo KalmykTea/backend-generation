@@ -19,7 +19,7 @@ public class AddressService {
         return addressRepository.findAll();
     }
 
-    public Optional<Address> findById(Integer id){
+    public Optional<Address> findById(Long id){
         return addressRepository.findById(id);
     }
 
@@ -31,7 +31,7 @@ public class AddressService {
         return addressRepository.save(address);
     }
 
-    public void deleteById(Integer id){
+    public void deleteById(Long id){
         addressRepository.deleteById(id);
     }
 }
