@@ -1,12 +1,13 @@
 package com.example.generation.controllers;
 
-import com.example.generation.dtos.RequestDTOs.AccountFullRequestDTO;
+import com.example.generation.dtos.RequestDTOs.AccountLimitsRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.AccountFullResponseDTO;
+import com.example.generation.dtos.ResponseDTOs.AccountLimitsResponseDTO;
 import com.example.generation.entities.Account;
-import com.example.generation.framework.annotations.ValidIBAN;
 import com.example.generation.framework.groups.OnUpdate;
-import com.example.generation.mappers.RequestDTOMappers.AccountFullRequestDTOMapper;
+import com.example.generation.mappers.RequestDTOMappers.AccountLimitsRequestDTOMapper;
 import com.example.generation.mappers.ResponseDTOMappers.AccountFullResponseDTOMapper;
+import com.example.generation.mappers.ResponseDTOMappers.AccountLimitsResponseDTOMapper;
 import com.example.generation.services.AccountService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -28,16 +29,12 @@ import java.util.List;
 @RequestMapping("accounts")
 public class AccountController {
     final private AccountService accountService;
-    final private AccountFullRequestDTOMapper accountRequestDTOMapper;
     private final AccountFullResponseDTOMapper accountFullResponseDTOMapper;
 
     public AccountController(
             AccountService accountService,
-            AccountFullRequestDTOMapper accountFullRequestDTOMapper,
-            AccountFullResponseDTOMapper accountFullResponseDTOMapper
-    ) {
+            AccountFullResponseDTOMapper accountFullResponseDTOMapper) {
         this.accountService = accountService;
-        this.accountRequestDTOMapper = accountFullRequestDTOMapper;
         this.accountFullResponseDTOMapper = accountFullResponseDTOMapper;
     }
 
@@ -48,7 +45,7 @@ public class AccountController {
             @ApiResponse(
                     responseCode = "200",
                     description = "Account updated successfully",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = AccountFullResponseDTO.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = AccountLimitsResponseDTO.class))
             ),
             @ApiResponse(
                     responseCode = "404",
@@ -58,15 +55,15 @@ public class AccountController {
 
     })
     @PreAuthorize("hasAuthority('EMPLOYEE')")
-    public AccountFullResponseDTO update(
+    public AccountLimitsResponseDTO update(
             @Parameter(description = "IBAN of the account to update")
             @PathVariable String iban,
             @Parameter(description = "Account payload used to update an existing account")
             @Validated({OnUpdate.class})
             @RequestBody
-            AccountFullRequestDTO accountFullRequestDTO
+            AccountLimitsRequestDTO accountLimitsRequestDTO
     ) {
-            return accountService.update(accountFullRequestDTO, iban);
+            return accountService.update(accountLimitsRequestDTO, iban);
     }
 
     @GetMapping("")
@@ -75,7 +72,7 @@ public class AccountController {
             @ApiResponse(
                     responseCode = "200",
                     description = "Accounts retrieved successfully",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = AccountFullResponseDTO.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = AccountLimitsResponseDTO.class))
             ),
             @ApiResponse(
                     responseCode = "404",
