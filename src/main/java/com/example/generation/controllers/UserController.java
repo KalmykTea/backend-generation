@@ -6,6 +6,7 @@ import com.example.generation.framework.groups.OnCreate;
 import com.example.generation.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -39,11 +40,11 @@ public class UserController {
             summary = "Approve user",
             description = "Approves a user with Pending status. Creates a Current and Savings account with a unique IBAN"
     )
-    @PostMapping("/{id}")
+    @PostMapping("/{id}/approve")
     @PreAuthorize("hasAuthority('EMPLOYEE')")
     public ResponseEntity<UserResponseDTO> approveUser(@PathVariable Long id,
                                                        @RequestBody @Validated(OnCreate.class)
-                                                       List<AccountLimitsRequestDTO> accountLimitsRequestDTOS) {
+                                                       List<@Valid AccountLimitsRequestDTO> accountLimitsRequestDTOS) {
         UserResponseDTO result = userService.approveUser(id, accountLimitsRequestDTOS);
 
         return new ResponseEntity<>(result, HttpStatus.OK);
