@@ -7,8 +7,12 @@ import com.example.generation.entities.User;
 import com.example.generation.enums.AccountStatus;
 import com.example.generation.enums.AccountType;
 import com.example.generation.enums.TransactionType;
+import com.example.generation.framework.exceptions.DailyLimitReachedException;
+import com.example.generation.framework.exceptions.InsufficientBalanceException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -46,11 +50,16 @@ public class TransactionPolicyTest {
         atmRequestDTO1.setTransactionType(TransactionType.DEPOSIT);
         atmRequestDTO2.setTransactionType(TransactionType.TRANSFER);
         transactionRequestDTO.setTransactionType(TransactionType.TRANSFER);
+        transactionRequestDTO.setAmount(BigDecimal.valueOf(20));
         transactionRequestDTO2.setTransactionType(TransactionType.WITHDRAWAL);
+        transactionRequestDTO2.setAmount(BigDecimal.valueOf(200));
 
         checkingAccount1.setUser(customer1);
         checkingAccount1.setAccountType(AccountType.CHECKING);
         checkingAccount1.setAccountStatus(AccountStatus.ACTIVE);
+        checkingAccount1.setDailyTransfer(BigDecimal.valueOf(10));
+        checkingAccount1.setDailyLimit(BigDecimal.valueOf(100));
+        checkingAccount1.setAbsoluteLimit(BigDecimal.valueOf(-100));
 
         checkingAccount2.setUser(customer2);
         checkingAccount2.setAccountType(AccountType.CHECKING);
@@ -150,4 +159,32 @@ public class TransactionPolicyTest {
         assertDoesNotThrow(()->
                 transactionPolicy.enforceValidATMTransaction(atmRequestDTO1, checkingAccount1));
     }
+
+    @Test
+    void enforceDailyLimit_throwsForExceededDailyLimit(){
+        assertThrows(DailyLimitReachedException.class,()->
+                transactionPolicy.enforceDailyLimit(transactionRequestDTO2.getTransactionType(), checkingAccount1.getDailyLimit(),
+                        checkingAccount1.getDailyTransfer().add(transactionRequestDTO2.getAmount())));
+    }
+
+    @Test
+    void enforceDailyLimit_allowsUnexceededDailyLimit(){
+        assertDoesNotThrow(()->
+                transactionPolicy.enforceDailyLimit(transactionRequestDTO.getTransactionType(), checkingAccount1.getDailyLimit(),
+                        checkingAccount1.getDailyTransfer().add(transactionRequestDTO.getAmount())));
+    }
+
+    @Test
+    void enforceDailyLimit_throwsForExceededAbsoluteLimit(){
+        assertThrows(InsufficientBalanceException.class,()->
+                transactionPolicy.enforceAbsoluteLimit(checkingAccount1.getAbsoluteLimit(),
+                        checkingAccount1.getBalance().add(transactionRequestDTO2.getAmount().negate())));
+    }//limit = -100 > amount = -200
+
+    @Test
+    void enforceAbsoluteLimit_allowsUnexceededAbsoluteLimit(){
+        assertDoesNotThrow(()->
+                transactionPolicy.enforceAbsoluteLimit(checkingAccount1.getAbsoluteLimit(),
+                        checkingAccount1.getBalance().add(transactionRequestDTO.getAmount().negate())));
+    }//limit = -100 < amount = -20
 }

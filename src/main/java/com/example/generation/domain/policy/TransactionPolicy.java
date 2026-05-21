@@ -2,10 +2,15 @@ package com.example.generation.domain.policy;
 
 import com.example.generation.dtos.RequestDTOs.ATMRequestDTO;
 import com.example.generation.entities.Account;
+
 import com.example.generation.enums.AccountStatus;
 import com.example.generation.enums.AccountType;
 import com.example.generation.enums.TransactionType;
+import com.example.generation.framework.exceptions.DailyLimitReachedException;
+import com.example.generation.framework.exceptions.InsufficientBalanceException;
 import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
 
 @Component
 public class TransactionPolicy {
@@ -52,6 +57,19 @@ public class TransactionPolicy {
         if(fromAccount.getAccountType() != AccountType.CHECKING ||
                 toAccount.getAccountType() != AccountType.CHECKING){
             throw new IllegalArgumentException("Both accounts need to be of type CHECKING");
+        }
+    }
+
+    public void enforceAbsoluteLimit(BigDecimal absoluteLimit, BigDecimal newBalance){
+        if (newBalance.compareTo(absoluteLimit) < 0) {
+            throw new InsufficientBalanceException();
+        }
+    }
+
+    public void enforceDailyLimit(TransactionType type, BigDecimal dailyLimit, BigDecimal currentTransferTotal){
+        if (type == TransactionType.DEPOSIT) return;
+        if(currentTransferTotal.compareTo(dailyLimit) >= 0){
+            throw new DailyLimitReachedException();
         }
     }
 

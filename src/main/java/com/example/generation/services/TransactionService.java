@@ -2,6 +2,7 @@ package com.example.generation.services;
 
 import com.example.generation.domain.policy.TransactionPolicy;
 import com.example.generation.dtos.RequestDTOs.ATMRequestDTO;
+import com.example.generation.dtos.RequestDTOs.BaseTransactionRequestDTO;
 import com.example.generation.dtos.RequestDTOs.TransactionRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.ATMResponseDTO;
 import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
@@ -22,6 +23,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Optional;
 
 @Service
@@ -76,8 +79,8 @@ public class TransactionService {
         }
 
         transactionPolicy.enforceValidTransfer(fromAccount, toAccount, dto.getTransactionType());
-        fromAccount.transact(dto.getAmount(), TransactionType.TRANSFER);
-        toAccount.transact(dto.getAmount(), TransactionType.DEPOSIT);
+        this.transact(fromAccount, dto.getAmount(), TransactionType.TRANSFER);
+        this.transact(toAccount, dto.getAmount(), TransactionType.DEPOSIT);
         accountService.save(fromAccount);
         accountService.save(toAccount);
         Transaction saved = transactionRepository.save(buildTransaction(fromAccount, toAccount, dto, currentUser));
@@ -88,7 +91,7 @@ public class TransactionService {
     public ATMResponseDTO processATMRequest(ATMRequestDTO dto) {
         Account account = accountService.getAccountByIbanOrThrow(dto.getIban());
         transactionPolicy.enforceValidATMTransaction(dto, account);
-        account.transact(dto.getAmount(), dto.getTransactionType());
+        this.transact(account, dto.getAmount(), dto.getTransactionType());
         accountService.save(account);
         Transaction transaction = buildTransaction(account, dto);
         transactionRepository.save(transaction);
@@ -117,6 +120,21 @@ public class TransactionService {
         transaction.setTransactionType(dto.getTransactionType());
         transaction.setInitiatedBy(account.getUser());
         return transaction;
+    }
+
+    public void transact(Account account, BigDecimal amount, TransactionType transactionType) {
+        if (!LocalDate.now().equals(account.getLastTransferDate())) {
+            account.setDailyTransfer(BigDecimal.ZERO);
+            account.setLastTransferDate(LocalDate.now());
+        }
+        BigDecimal currentTransferTally = account.getDailyTransfer().add(amount);
+        BigDecimal newBalance = transactionType == TransactionType.DEPOSIT
+                ? account.getBalance().add(amount)
+                : account.getBalance().subtract(amount);
+        transactionPolicy.enforceDailyLimit(transactionType, account.getDailyLimit(), currentTransferTally);
+        transactionPolicy.enforceAbsoluteLimit(account.getAbsoluteLimit(), newBalance);
+        account.setDailyTransfer(currentTransferTally);
+        account.setBalance(newBalance);
     }
 
     public Page<Transaction> findTransactionsByUserId(Long userId, Pageable pageable) {
