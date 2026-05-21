@@ -24,7 +24,7 @@ public class TransactionPolicy {
     }
 
     public void enforceAccountMustBeActive(Account account, String accountName) {
-        if (account.getAccountStatus() == AccountStatus.ACTIVE) {
+        if (account.getAccountStatus() != AccountStatus.ACTIVE) {
             throw new IllegalArgumentException(accountName + " is not active");
         }
     }
