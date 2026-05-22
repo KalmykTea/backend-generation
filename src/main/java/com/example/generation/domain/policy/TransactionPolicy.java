@@ -68,7 +68,7 @@ public class TransactionPolicy {
 
     public void enforceDailyLimit(TransactionType type, BigDecimal dailyLimit, BigDecimal currentTransferTotal){
         if (type == TransactionType.DEPOSIT) return;
-        if(currentTransferTotal.compareTo(dailyLimit) >= 0){
+        if(currentTransferTotal.compareTo(dailyLimit) > 0){
             throw new DailyLimitReachedException();
         }
     }

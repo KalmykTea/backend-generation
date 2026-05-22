@@ -122,7 +122,7 @@ public class TransactionService {
         return transaction;
     }
 
-    public void transact(Account account, BigDecimal amount, TransactionType transactionType) {
+    private void transact(Account account, BigDecimal amount, TransactionType transactionType) {
         if (!LocalDate.now().equals(account.getLastTransferDate())) {
             account.setDailyTransfer(BigDecimal.ZERO);
             account.setLastTransferDate(LocalDate.now());
