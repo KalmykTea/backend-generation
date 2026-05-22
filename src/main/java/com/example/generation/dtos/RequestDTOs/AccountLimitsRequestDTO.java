@@ -5,13 +5,14 @@ import com.example.generation.framework.annotations.ValidIBAN;
 import com.example.generation.framework.groups.OnCreate;
 import com.example.generation.framework.groups.OnUpdate;
 import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.*;
 
 import java.math.BigDecimal;
 
-@Data
 @AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
 public class AccountLimitsRequestDTO {
 
     @Null(groups = OnCreate.class)
