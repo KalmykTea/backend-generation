@@ -1,13 +1,12 @@
 package com.example.generation.security;
 
+import com.example.generation.domain.policy.CPEPolicy;
 import com.example.generation.dtos.RequestDTOs.ATMRequestDTO;
 import com.example.generation.entities.User;
 import com.example.generation.repositories.AccountRepository;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.PermissionEvaluator;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -16,18 +15,21 @@ import java.util.Objects;
 public class CustomPermissionEvaluator implements PermissionEvaluator {
 
     private final AccountRepository accountRepository;
-    public CustomPermissionEvaluator(AccountRepository accountRepository) {
+    private final CPEPolicy cpePolicy;
+    public CustomPermissionEvaluator(AccountRepository accountRepository,
+                                     CPEPolicy cpePolicy) {
         this.accountRepository = accountRepository;
+        this.cpePolicy = cpePolicy;
     }
 
     @Override
     public boolean hasPermission(Authentication authentication, Object targetDomainObject, Object permission) {
-        return false; // custom code here
+        return false;
     }
 
     @Override
     public boolean hasPermission(Authentication authentication, Serializable targetId, String targetType, Object permission) {
-        return false; // custom code here
+        return false;
     }
 
     // you can't withdraw or deposit
@@ -41,10 +43,8 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
     }
 
     private User getAuthenticatedUser(Authentication authentication) {
-        if (authentication == null || !(authentication.getPrincipal() instanceof User user)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authenticated");
-        }
-        return user;
+        cpePolicy.enforceUserIsAuthenticated(authentication);
+        return (User) authentication.getPrincipal();
     }
 
     private boolean isCustomer(Authentication authentication) {
