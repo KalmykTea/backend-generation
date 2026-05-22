@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 public class AccountPolicy {
     public void enforceAccountNotNull(Account account) {
         if (account == null) {
-            throw new IllegalArgumentException("account is null");
+            throw new IllegalArgumentException("Account is null due to unexpected dto transaction type.");
         }
     }
 }

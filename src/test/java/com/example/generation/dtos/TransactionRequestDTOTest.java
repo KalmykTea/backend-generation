@@ -29,37 +29,29 @@ public class TransactionRequestDTOTest extends BTRDTOTest{
     @Test
     void TRDTO_hasNoFromAccountIbanViolations()
     {
-        Set<ConstraintViolation<TransactionRequestDTO>> violations = validator.validate(validDTO);
-        boolean hasIbanViolation = violations.stream()
-                .anyMatch(v -> v.getPropertyPath().toString().equals("fromAccountIban"));
-        assertFalse(hasIbanViolation);
+        Set<ConstraintViolation<TransactionRequestDTO>> violations = validator.validateProperty(validDTO,  "fromAccountIban");
+        assertTrue(violations.isEmpty());
     }
 
     @Test
     void TRDTO_hasFromAccountIbanViolations()
     {
-        Set<ConstraintViolation<TransactionRequestDTO>> violations = validator.validate(invalidDTO);
-        boolean hasIbanViolation = violations.stream()
-                .anyMatch(v -> v.getPropertyPath().toString().equals("fromAccountIban"));
-        assertTrue(hasIbanViolation);
+        Set<ConstraintViolation<TransactionRequestDTO>> violations = validator.validateProperty(invalidDTO,   "fromAccountIban");
+        assertFalse(violations.isEmpty());
     }
 
     @Test
     void TRDTO_hasNoToAccountIbanViolations()
     {
-        Set<ConstraintViolation<TransactionRequestDTO>> violations = validator.validate(validDTO);
-        boolean hasIbanViolation = violations.stream()
-                .anyMatch(v -> v.getPropertyPath().toString().equals("toAccountIban"));
-        assertFalse(hasIbanViolation);
+        Set<ConstraintViolation<TransactionRequestDTO>> violations = validator.validateProperty(validDTO, "toAccountIban");
+        assertTrue(violations.isEmpty());
     }
 
     @Test
     void TRDTO_hasToAccountIbanViolations()
     {
-        Set<ConstraintViolation<TransactionRequestDTO>> violations = validator.validate(invalidDTO);
-        boolean hasIbanViolation = violations.stream()
-                .anyMatch(v -> v.getPropertyPath().toString().equals("toAccountIban"));
-        assertTrue(hasIbanViolation);
+        Set<ConstraintViolation<TransactionRequestDTO>> violations = validator.validateProperty(invalidDTO, "toAccountIban");
+        assertFalse(violations.isEmpty());
     }
 
 

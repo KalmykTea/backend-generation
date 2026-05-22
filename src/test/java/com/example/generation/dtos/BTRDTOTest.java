@@ -35,34 +35,26 @@ public class BTRDTOTest {
     @Test
     void BTRDTO_hasNoAmountViolations()
     {
-        Set<ConstraintViolation<BaseTransactionRequestDTO>> violations = validator.validate(dto);
-        boolean hasAmountViolation = violations.stream()
-                .anyMatch(v -> v.getPropertyPath().toString().equals("amount"));
-        assertFalse(hasAmountViolation);
+        Set<ConstraintViolation<BaseTransactionRequestDTO>> violations = validator.validateProperty(dto, "amount");
+        assertTrue(violations.isEmpty());
     }
 
     @Test
     void BTRDTO_hasAmountViolations(){
-        Set<ConstraintViolation<BaseTransactionRequestDTO>> violations = validator.validate(dto2);
-        boolean hasAmountViolation = violations.stream()
-                .anyMatch(v -> v.getPropertyPath().toString().equals("amount"));
-        assertTrue(hasAmountViolation);
+        Set<ConstraintViolation<BaseTransactionRequestDTO>> violations = validator.validateProperty(dto2, "amount");
+        assertFalse(violations.isEmpty());
     }
 
     @Test
     void BTRDTO_hasDescriptionViolations(){
 
-        Set<ConstraintViolation<BaseTransactionRequestDTO>> violations = validator.validate(dto);
-        boolean hasDescriptionViolation = violations.stream()
-                .anyMatch(v -> v.getPropertyPath().toString().equals("description"));
-        assertTrue(hasDescriptionViolation);
+        Set<ConstraintViolation<BaseTransactionRequestDTO>> violations = validator.validateProperty(dto, "description");
+        assertFalse(violations.isEmpty());
     }
 
     @Test
     void BTRDTO_hasNoDescriptionViolations(){
-        Set<ConstraintViolation<BaseTransactionRequestDTO>> violations = validator.validate(dto2);
-        boolean hasDescriptionViolation = violations.stream()
-                .anyMatch(v -> v.getPropertyPath().toString().equals("description"));
-        assertFalse(hasDescriptionViolation);
+        Set<ConstraintViolation<BaseTransactionRequestDTO>> violations = validator.validateProperty(dto2, "description");
+        assertTrue(violations.isEmpty());
     }
 }

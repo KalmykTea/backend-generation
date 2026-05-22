@@ -35,17 +35,13 @@ public class ATMRequestDTOTest extends BTRDTOTest{
 
     @Test
     void ATMRDTO_hasNoIbanViolations(){
-        Set<ConstraintViolation<ATMRequestDTO>> violations = validator.validate(validAtmDto);
-        boolean hasIbanViolation = violations.stream()
-                .anyMatch(v -> v.getPropertyPath().toString().equals("iban"));
-        assertFalse(hasIbanViolation);
+        Set<ConstraintViolation<ATMRequestDTO>> violations = validator.validateProperty(validAtmDto, "iban");
+        assertTrue(violations.isEmpty());
     }
 
     @Test
     void ATMRDTO_hasIbanViolations(){
-        Set<ConstraintViolation<ATMRequestDTO>> violations = validator.validate(invalidAtmDto);
-        boolean hasIbanViolation = violations.stream()
-                .anyMatch(v -> v.getPropertyPath().toString().equals("iban"));
-        assertTrue(hasIbanViolation);
+        Set<ConstraintViolation<ATMRequestDTO>> violations = validator.validateProperty(invalidAtmDto, "iban");
+        assertFalse(violations.isEmpty());
     }
 }

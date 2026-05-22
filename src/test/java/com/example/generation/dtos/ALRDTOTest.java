@@ -1,7 +1,6 @@
 package com.example.generation.dtos;
 
 import com.example.generation.dtos.RequestDTOs.AccountLimitsRequestDTO;
-import com.example.generation.framework.groups.OnCreate;
 import com.example.generation.framework.groups.OnUpdate;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
@@ -40,33 +39,26 @@ public class ALRDTOTest {
 
     @Test
     void ALRDTO_hasNoIbanViolations(){
-        Set<ConstraintViolation<AccountLimitsRequestDTO>> violations = validator.validate(validALRDto, OnUpdate.class);
-        boolean hasIbanViolation = violations.stream()
-                .anyMatch(v -> v.getPropertyPath().toString().equals("iban"));
-        assertFalse(hasIbanViolation);
+        Set<ConstraintViolation<AccountLimitsRequestDTO>> violations = validator.validateProperty(validALRDto, "iban", OnUpdate.class);
+        assertTrue(violations.isEmpty());
     }
 
     @Test
     void ALRDTO_hasIbanViolations(){
-        Set<ConstraintViolation<AccountLimitsRequestDTO>> violations = validator.validate(invalidALRDto, OnUpdate.class);
-        boolean hasIbanViolation = violations.stream()
-                .anyMatch(v -> v.getPropertyPath().toString().equals("iban"));
-        assertTrue(hasIbanViolation);
+        Set<ConstraintViolation<AccountLimitsRequestDTO>> violations = validator.validateProperty(invalidALRDto, "iban", OnUpdate.class);
+        assertFalse(violations.isEmpty());
     }
 
     @Test
     void ALRDTO_hasNoDailyLimitViolations(){
-        Set<ConstraintViolation<AccountLimitsRequestDTO>> violations = validator.validate(validALRDto, OnCreate.class);
-        boolean hasLimitViolation = violations.stream()
-                .anyMatch(v -> v.getPropertyPath().toString().equals("dailyLimit"));
-        assertFalse(hasLimitViolation);
+        Set<ConstraintViolation<AccountLimitsRequestDTO>> violations = validator.validateProperty(validALRDto, "dailyLimit", OnUpdate.class);
+        assertTrue(violations.isEmpty());
+
     }
 
     @Test
     void ALRDTO_hasDailyLimitViolations(){
-        Set<ConstraintViolation<AccountLimitsRequestDTO>> violations = validator.validate(invalidALRDto, OnUpdate.class);
-        boolean hasLimitViolation = violations.stream()
-                .anyMatch(v -> v.getPropertyPath().toString().equals("dailyLimit"));
-        assertTrue(hasLimitViolation);
+        Set<ConstraintViolation<AccountLimitsRequestDTO>> violations = validator.validateProperty(invalidALRDto, "dailyLimit", OnUpdate.class);
+        assertFalse(violations.isEmpty());
     }
 }
