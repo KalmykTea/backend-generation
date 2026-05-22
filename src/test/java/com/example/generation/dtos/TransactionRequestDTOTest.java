@@ -1,5 +1,6 @@
 package com.example.generation.dtos;
 
+import com.example.generation.dtos.RequestDTOs.BaseTransactionRequestDTO;
 import com.example.generation.dtos.RequestDTOs.TransactionRequestDTO;
 import jakarta.validation.ConstraintViolation;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,12 +19,17 @@ public class TransactionRequestDTOTest extends BTRDTOTest{
     void setUp()
     {
         super.setUp();
-        validDTO = new TransactionRequestDTO();
+        validDTO = (TransactionRequestDTO) wholeValidDTO;
         validDTO.setFromAccountIban("NL62INHO0366278277");
         validDTO.setToAccountIban("NL32INHO0377278277");
-        invalidDTO = new TransactionRequestDTO();
+        invalidDTO = (TransactionRequestDTO) wholeInvalidDTO;
         invalidDTO.setFromAccountIban("123456789");
         invalidDTO.setToAccountIban("129056789");
+    }
+
+    @Override
+    BaseTransactionRequestDTO createDTO() {
+        return new TransactionRequestDTO();
     }
 
     @Test
@@ -54,5 +60,16 @@ public class TransactionRequestDTOTest extends BTRDTOTest{
         assertFalse(violations.isEmpty());
     }
 
+    @Test
+    void TRDTO_hasNoViolations(){
+        Set<ConstraintViolation<TransactionRequestDTO>> violations = validator.validate(validDTO);
+        assertTrue(violations.isEmpty());
+    }
+
+    @Test
+    void TRDTO_hasViolations(){
+        Set<ConstraintViolation<TransactionRequestDTO>> violations = validator.validate(invalidDTO);
+        assertFalse(violations.isEmpty());
+    }
 
 }
