@@ -25,8 +25,8 @@ public class ATMRequestDTOTest extends BTRDTOTest{
     @BeforeEach
     void setUp() {
         super.setUp();
-        validAtmDto = new ATMRequestDTO();
-        invalidAtmDto = new ATMRequestDTO();
+        validAtmDto = (ATMRequestDTO) wholeValidDTO;
+        invalidAtmDto = (ATMRequestDTO) wholeInvalidDTO;
         validIBAN = "NL62INHO0366278277";
         invalidIBAN = "123456789ctu";
         validAtmDto.setIban(validIBAN);
@@ -35,17 +35,25 @@ public class ATMRequestDTOTest extends BTRDTOTest{
 
     @Test
     void ATMRDTO_hasNoIbanViolations(){
-        Set<ConstraintViolation<ATMRequestDTO>> violations = validator.validate(validAtmDto);
-        boolean hasIbanViolation = violations.stream()
-                .anyMatch(v -> v.getPropertyPath().toString().equals("iban"));
-        assertFalse(hasIbanViolation);
+        Set<ConstraintViolation<ATMRequestDTO>> violations = validator.validateProperty(validAtmDto, "iban");
+        assertTrue(violations.isEmpty());
     }
 
     @Test
     void ATMRDTO_hasIbanViolations(){
+        Set<ConstraintViolation<ATMRequestDTO>> violations = validator.validateProperty(invalidAtmDto, "iban");
+        assertFalse(violations.isEmpty());
+    }
+
+    @Test
+    void ATMRDTO_hasNoViolations() {
+        Set<ConstraintViolation<ATMRequestDTO>> violations = validator.validate(validAtmDto);
+        assertTrue(violations.isEmpty());
+    }
+
+    @Test
+    void ATMRDTO_hasViolations() {
         Set<ConstraintViolation<ATMRequestDTO>> violations = validator.validate(invalidAtmDto);
-        boolean hasIbanViolation = violations.stream()
-                .anyMatch(v -> v.getPropertyPath().toString().equals("iban"));
-        assertTrue(hasIbanViolation);
+        assertFalse(violations.isEmpty());
     }
 }

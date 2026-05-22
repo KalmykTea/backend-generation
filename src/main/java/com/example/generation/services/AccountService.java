@@ -1,5 +1,6 @@
 package com.example.generation.services;
 
+import com.example.generation.domain.policy.AccountPolicy;
 import com.example.generation.dtos.RequestDTOs.AccountLimitsRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.AccountFullResponseDTO;
 import com.example.generation.dtos.ResponseDTOs.AccountLimitsResponseDTO;
@@ -21,15 +22,18 @@ public class AccountService {
     private final AccountRepository accountRepository;
     private final AccountLimitsResponseDTOMapper accountLimitsResponseDTOMapper;
     private final AccountFullResponseDTOMapper accountFullResponseDTOMapper;
+    private final AccountPolicy accountPolicy;
 
     public AccountService (
             AccountRepository accountRepository,
             AccountLimitsResponseDTOMapper accountLimitsResponseDTOMapper,
-            AccountFullResponseDTOMapper accountFullResponseDTOMapper
+            AccountFullResponseDTOMapper accountFullResponseDTOMapper,
+            AccountPolicy accountPolicy
     ) {
         this.accountRepository = accountRepository;
         this.accountLimitsResponseDTOMapper = accountLimitsResponseDTOMapper;
         this.accountFullResponseDTOMapper = accountFullResponseDTOMapper;
+        this.accountPolicy = accountPolicy;
     }
 
     public Iterable<Account> findAll() {
@@ -43,7 +47,7 @@ public class AccountService {
     public AccountLimitsResponseDTO update(AccountLimitsRequestDTO accountLimitsRequestDTO, String iban) {
         Account existing = this.getAccountByIbanOrThrow(iban);
         if (accountLimitsRequestDTO.getDailyLimit() != null) {
-        existing.setDailyLimit(accountLimitsRequestDTO.getDailyLimit());
+            existing.setDailyLimit(accountLimitsRequestDTO.getDailyLimit());
         }
         if (accountLimitsRequestDTO.getAbsoluteLimit() != null) {
             existing.setAbsoluteLimit(accountLimitsRequestDTO.getAbsoluteLimit());
@@ -87,7 +91,7 @@ public class AccountService {
 
         for (AccountLimitsRequestDTO dto : accountLimitsRequestDTOs) {
             Account account = accountMap.get(dto.getAccountType()); //get the account that matches the account type
-            if (account == null) throw new IllegalArgumentException("Unexpected account type: " + dto.getAccountType()); //maps will return null if the key (account type) doesn't exist.
+            accountPolicy.enforceAccountNotNull(account); //map will return null if the key (account type <> checking or savings) doesn't exist.
             account.setDailyLimit(dto.getDailyLimit());
             account.setAbsoluteLimit(dto.getAbsoluteLimit());
         }
