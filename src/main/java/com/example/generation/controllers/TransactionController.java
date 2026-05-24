@@ -5,7 +5,6 @@ import com.example.generation.dtos.RequestDTOs.TransactionRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.ATMResponseDTO;
 import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
 import com.example.generation.entities.Transaction;
-import com.example.generation.enums.TransactionType;
 import com.example.generation.mappers.ResponseDTOMappers.TransactionResponseDTOMapper;
 import com.example.generation.services.TransactionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -48,27 +47,19 @@ public class TransactionController {
                             examples = @ExampleObject(
                                     name = "Transfer response",
                                     value = """
-                                {
-                                  "id": 1,
-                                  "fromAccount": {
-                                    "iban": "NL13INHO0162593609",
-                                    "userId": 2,
-                                    "accountType": "CHECKING"
-                                  },
-                                  "toAccount": {
-                                    "iban": "NL18INHO0398474392",
-                                    "userId": 4,
-                                    "accountType": "CHECKING"
-                                  },
-                                  "initiatedBy": {
-                                    "id": 2,
-                                    "firstName": "Jan",
-                                    "lastName": "Jansen"
-                                  },
-                                  "amount": 250.00,
-                                  "description": "Gift money :)",
-                                  "transactionType": "TRANSFER"
-                                }
+                                            {
+                                                 "amount": 250.00,
+                                                 "description": "Gift money :)",
+                                                 "fromAccountIban": "NL67INHO0398474392",
+                                                 "id": 10,
+                                                 "initiatedBy": {
+                                                     "firstName": "Jane",
+                                                     "id": 2,
+                                                     "lastName": "Doe"
+                                                 },
+                                                 "toAccountIban": "NL69INHO0398474392",
+                                                 "transactionType": "TRANSFER"
+                                             }
                                 """
                             )
                     )
@@ -76,7 +67,7 @@ public class TransactionController {
             @ApiResponse(responseCode = "400", description = "Insufficient balance or daily limit reached", content = @Content),
             @ApiResponse(responseCode = "404", description = "Account not found", content = @Content)
     })
-    @PreAuthorize("hasAuthority('EMPLOYEE')")
+    @PreAuthorize("hasAuthority('EMPLOYEE') or hasAuthority('CUSTOMER')")
     public TransactionResponseDTO transfer(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
@@ -86,26 +77,14 @@ public class TransactionController {
                             examples = @ExampleObject(
                                     name = "Transfer request",
                                     value = """
-                                {
-                                  "fromAccount": {
-                                    "iban": "NL13INHO0162593609",
-                                    "userId": 2,
-                                    "accountType": "CHECKING"
-                                  },
-                                  "toAccount": {
-                                    "iban": "NL18INHO0398474392",
-                                    "userId": 4,
-                                    "accountType": "CHECKING"
-                                  },
-                                  "initiatedBy": {
-                                    "id": 2,
-                                    "firstName": "Jan",
-                                    "lastName": "Jansen"
-                                  },
-                                  "amount": 250.00,
-                                  "description": "Gift money :)",
-                                  "transactionType": "TRANSFER"
-                                }
+                                            {
+                                                "id" : null,
+                                                "fromAccountIban": "NL67INHO0398474392",
+                                                "toAccountIban": "NL69INHO0398474392",
+                                                "amount": 250.00,
+                                                "description": "Gift money :)",
+                                                "transactionType": "TRANSFER"
+                                            }
                                 """
                             )
                     )

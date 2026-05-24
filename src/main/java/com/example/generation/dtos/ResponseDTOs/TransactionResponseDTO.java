@@ -1,7 +1,6 @@
 package com.example.generation.dtos.ResponseDTOs;
 
 import com.example.generation.enums.TransactionType;
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Value;
 
@@ -11,8 +10,8 @@ import java.math.BigDecimal;
 @Builder
 public class TransactionResponseDTO {
     long id;
-    AccountTransactionResponseDTO fromAccount;
-    AccountTransactionResponseDTO toAccount;
+    String fromAccountIban;
+    String toAccountIban;
     UserResponseDTO initiatedBy;
     BigDecimal amount;
     String description;
