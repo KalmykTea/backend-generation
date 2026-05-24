@@ -7,7 +7,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 
 @Data
-public abstract class BaseTransactionRequestDTO {
+public class BaseTransactionRequestDTO {
     @Null
     private Long id;
 

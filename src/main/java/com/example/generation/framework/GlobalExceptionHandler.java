@@ -9,6 +9,7 @@ import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -41,8 +42,8 @@ public class GlobalExceptionHandler {
                 .toList();
 
         return new ResponseEntity<>(new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(), "Validation Failed", fieldErrors
-        ),  HttpStatus.INTERNAL_SERVER_ERROR);
+                HttpStatus.BAD_REQUEST.value(), "Validation Failed", fieldErrors
+        ),  HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -53,8 +54,8 @@ public class GlobalExceptionHandler {
                 .toList();
 
         return new ResponseEntity<>(new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage(), fieldErrors
-        ),  HttpStatus.INTERNAL_SERVER_ERROR);
+                HttpStatus.BAD_REQUEST.value(), ex.getMessage(), fieldErrors
+        ),  HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(InsufficientBalanceException.class)
@@ -85,12 +86,11 @@ public class GlobalExceptionHandler {
         ),   HttpStatus.FORBIDDEN);
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
-        ex.printStackTrace();
+    @ExceptionHandler(UsernameNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleUsernameNotFound(UsernameNotFoundException ex) {
         return new ResponseEntity<>(new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(), "Unexpected Server Error", List.of()
-        ),  HttpStatus.BAD_REQUEST);
+                HttpStatus.UNAUTHORIZED.value(), ex.getMessage(), List.of()
+        ),   HttpStatus.UNAUTHORIZED);
     }
     @ExceptionHandler(AccountAlreadyClosedException.class)
     public ResponseEntity<ErrorResponse> handleAccountAlreadyClosed(AccountAlreadyClosedException ex) {
@@ -111,5 +111,13 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(), ex.getMessage(), List.of()
         ),  HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
+        ex.printStackTrace();
+        return new ResponseEntity<>(new ErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(), "Unexpected Server Error", List.of()
+        ),  HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

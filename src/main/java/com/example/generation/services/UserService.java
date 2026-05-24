@@ -1,11 +1,13 @@
 package com.example.generation.services;
 
+import com.example.generation.dtos.RequestDTOs.AccountLimitsRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.UserResponseDTO;
 import com.example.generation.entities.User;
 import com.example.generation.enums.UserStatus;
 import com.example.generation.mappers.ResponseDTOMappers.UserResponseDTOMapper;
 import com.example.generation.repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -56,7 +58,8 @@ public class UserService implements UserDetailsService {
         userRepository.deleteById(id);
     }
 
-    public UserResponseDTO approveUser(Long id) {
+    @Transactional
+    public UserResponseDTO approveUser(Long id, List<AccountLimitsRequestDTO> accountLimitsRequestDTOS) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
@@ -68,7 +71,7 @@ public class UserService implements UserDetailsService {
         // change status to Approved, save, create accounts
         user.setUserStatus(UserStatus.APPROVED);
         User savedUser = userRepository.save(user);
-        accountService.createAccountsForUser(user);
+        accountService.createAccountsForUser(user, accountLimitsRequestDTOS);
 
         return userResponseDTOMapper.toDTO(savedUser);
     }

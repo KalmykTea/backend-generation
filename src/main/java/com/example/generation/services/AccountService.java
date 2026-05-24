@@ -1,12 +1,15 @@
 package com.example.generation.services;
 
-import com.example.generation.dtos.RequestDTOs.AccountFullRequestDTO;
+import com.example.generation.domain.policy.AccountPolicy;
+import com.example.generation.dtos.RequestDTOs.AccountLimitsRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.AccountFullResponseDTO;
 import com.example.generation.dtos.ResponseDTOs.AccountClosureResponse;
+import com.example.generation.dtos.ResponseDTOs.AccountLimitsResponseDTO;
 import com.example.generation.entities.Account;
 import com.example.generation.entities.User;
 import com.example.generation.enums.AccountType;
 import com.example.generation.mappers.ResponseDTOMappers.AccountFullResponseDTOMapper;
+import com.example.generation.mappers.ResponseDTOMappers.AccountLimitsResponseDTOMapper;
 import com.example.generation.entities.Transaction;
 import com.example.generation.enums.AccountStatus;
 import com.example.generation.framework.exceptions.AccountAlreadyClosedException;
@@ -19,6 +22,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -27,20 +31,26 @@ import java.util.Optional;
 @Service
 public class AccountService {
     private final AccountRepository accountRepository;
+    private final AccountLimitsResponseDTOMapper accountLimitsResponseDTOMapper;
     private final AccountFullResponseDTOMapper accountFullResponseDTOMapper;
     private final TransactionRepository transactionRepository;
     private final AccountFullResponseDTOMapper accountResponseDTOMapper;
+    private final AccountPolicy accountPolicy;
 
     public AccountService (
             AccountRepository accountRepository,
             AccountFullResponseDTOMapper accountFullResponseDTOMapper,
             TransactionRepository transactionRepository,
-            AccountFullResponseDTOMapper accountResponseDTOMapper
-    ) {
+            AccountFullResponseDTOMapper accountResponseDTOMapper,
+            AccountLimitsResponseDTOMapper accountLimitsResponseDTOMapper,
+            AccountPolicy accountPolicy
+            ) {
         this.accountRepository = accountRepository;
+        this.accountLimitsResponseDTOMapper = accountLimitsResponseDTOMapper;
         this.accountFullResponseDTOMapper = accountFullResponseDTOMapper;
         this.transactionRepository = transactionRepository;
         this.accountResponseDTOMapper = accountResponseDTOMapper;
+        this.accountPolicy = accountPolicy;
     }
 
     public Iterable<Account> findAll() {
@@ -51,23 +61,23 @@ public class AccountService {
         return accountRepository.findByUserId(userId);
     }
 
+    public AccountLimitsResponseDTO update(AccountLimitsRequestDTO accountLimitsRequestDTO, String iban) {
+        Account existing = this.getAccountByIbanOrThrow(iban);
+        if (accountLimitsRequestDTO.getDailyLimit() != null) {
+            existing.setDailyLimit(accountLimitsRequestDTO.getDailyLimit());
+        }
+        if (accountLimitsRequestDTO.getAbsoluteLimit() != null) {
+            existing.setAbsoluteLimit(accountLimitsRequestDTO.getAbsoluteLimit());
+        }
+        return accountLimitsResponseDTOMapper.toDTO(accountRepository.save(existing));
+    }
+
     public Account findById(String id) {
         Optional<Account> account = accountRepository.findById(id);
         if (account.isPresent()) {
             return account.get();
         }
         else throw new EntityNotFoundException("Account with id: " + id + " not found");
-    }
-
-    public AccountFullResponseDTO update(AccountFullRequestDTO accountFullRequestDTO, String iban) {
-        Account existing = this.getAccountByIbanOrThrow(iban);
-        if (accountFullRequestDTO.getDailyLimit() != null) {
-        existing.setDailyLimit(accountFullRequestDTO.getDailyLimit());
-        }
-        if (accountFullRequestDTO.getAbsoluteLimit() != null) {
-            existing.setAbsoluteLimit(accountFullRequestDTO.getAbsoluteLimit());
-        }
-        return accountFullResponseDTOMapper.toDTO(accountRepository.save(existing));
     }
 
     public void save(Account account) {
@@ -98,18 +108,28 @@ public class AccountService {
                 .toList();
     }
 
-    public void createAccountsForUser(User user) {
-        Account current = new Account();
-        current.setUser(user);
-        current.setIban(generateUniqueIban());
-        current.setAccountType(AccountType.CHECKING);
-        accountRepository.save(current);
+    public void createAccountsForUser(User user, List<AccountLimitsRequestDTO> accountLimitsRequestDTOs) {
+        Map<AccountType, Account> accountMap = Map.of(
+                AccountType.CHECKING, createAccount(user, AccountType.CHECKING),
+                AccountType.SAVINGS, createAccount(user, AccountType.SAVINGS)
+        );
 
-        Account savings = new Account();
-        savings.setUser(user);
-        savings.setIban(generateUniqueIban());
-        savings.setAccountType(AccountType.SAVINGS);
-        accountRepository.save(savings);
+        for (AccountLimitsRequestDTO dto : accountLimitsRequestDTOs) {
+            Account account = accountMap.get(dto.getAccountType()); //get the account that matches the account type
+            accountPolicy.enforceAccountNotNull(account); //map will return null if the key (account type <> checking or savings) doesn't exist.
+            account.setDailyLimit(dto.getDailyLimit());
+            account.setAbsoluteLimit(dto.getAbsoluteLimit());
+        }
+
+        accountRepository.saveAll(accountMap.values());
+    }
+
+    private Account createAccount(User user, AccountType type) {
+        Account account = new Account();
+        account.setUser(user);
+        account.setIban(generateUniqueIban());
+        account.setAccountType(type);
+        return account;
     }
 
     private String generateUniqueIban() {

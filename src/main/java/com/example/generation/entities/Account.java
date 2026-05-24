@@ -2,9 +2,6 @@ package com.example.generation.entities;
 
 import com.example.generation.enums.AccountStatus;
 import com.example.generation.enums.AccountType;
-import com.example.generation.enums.TransactionType;
-import com.example.generation.framework.exceptions.DailyLimitReachedException;
-import com.example.generation.framework.exceptions.InsufficientBalanceException;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -55,30 +52,5 @@ public class Account {
 
     @Column(name = "last_transfer_date")
     private LocalDate lastTransferDate = null;
-
-    public void transact(BigDecimal amount, TransactionType type){
-        BigDecimal newBalance;
-        LocalDate today = LocalDate.now();
-
-        if (!today.equals(lastTransferDate)) {
-            dailyTransfer = BigDecimal.ZERO;
-            lastTransferDate = today;
-        }
-
-        BigDecimal currentTransferTally = dailyTransfer.add(amount);
-        if (type == TransactionType.DEPOSIT) {
-                newBalance = balance.add(amount);
-        }
-        else if(currentTransferTally.compareTo(dailyLimit) <= 0){
-            dailyTransfer = currentTransferTally;
-            newBalance = balance.subtract(amount);
-        }
-        else throw new DailyLimitReachedException();
-
-        if (newBalance.compareTo(absoluteLimit) < 0) {
-            throw new InsufficientBalanceException();
-        }
-        balance = newBalance;
-    }
 
 }
