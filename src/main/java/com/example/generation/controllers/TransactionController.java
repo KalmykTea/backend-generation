@@ -229,7 +229,8 @@ public class TransactionController {
     }
 
     @GetMapping("/{userId}")
-    @PreAuthorize("hasRole('CUSTOMER') and @userSecurityService.hasAccessToUser(principal, #userId)")
+    @PreAuthorize("hasAuthority('CUSTOMER')")
+//    @PreAuthorize("hasRole('CUSTOMER') and @userSecurityService.hasAccessToUser(principal, #userId)")
     @Operation(summary = "Search and filter customer transactions", description = "Retrieve a paginated list of transactions for the authenticated customer with optional filters.")
     public ResponseEntity<Page<TransferResponseDTO>> getCustomerTransactions(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -249,7 +250,8 @@ public class TransactionController {
         return new ResponseEntity<>(transactionPage, HttpStatus.OK);
     }
 
-    @PreAuthorize("hasRole('EMPLOYEE')")
+    @GetMapping("/all")
+    @PreAuthorize("hasAuthority('EMPLOYEE')")
     @Operation(summary = "Get paginated list of all transactions", description = "Retrieve a paginated list of all transactions. Restricted to employees.")
     public ResponseEntity<Page<TransferResponseDTO>> getPaginatedTransactions(
             @RequestParam(defaultValue = "0") int page,

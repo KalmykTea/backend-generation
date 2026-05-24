@@ -53,7 +53,7 @@ public class AccountController {
     //view all customer accounts
 
     @GetMapping
-    @PreAuthorize("hasRole('EMPLOYEE')")
+    @PreAuthorize("hasAuthority('EMPLOYEE')")
     @Operation(summary = "Get paginated list of all customer accounts", description = "Retrieve a paginated list of all customer accounts. Restricted to employees.")
     public ResponseEntity<Page<AccountFullResponseDTO>> getPaginatedAccounts(
             @RequestParam(defaultValue = "0") int page,
@@ -67,11 +67,11 @@ public class AccountController {
 
     //close account
 
-    @PatchMapping("/{accountId}/close")
-    @PreAuthorize("hasRole('EMPLOYEE')")
+    @PatchMapping("/{iban}/close")
+    @PreAuthorize("hasAuthority('EMPLOYEE')")
     @Operation(summary = "Close a customer account", description = "Soft deactivates a customer account by setting its status to CLOSED. Restricted to employees.")
-    public ResponseEntity<AccountClosureResponse> closeAccount(@PathVariable String accountId) {
-        return ResponseEntity.ok(accountService.closeAccount(accountId));
+    public ResponseEntity<AccountClosureResponse> closeAccount(@PathVariable String iban) {
+        return ResponseEntity.ok(accountService.closeAccount(iban));
     }
 
     // controller methods based on user stories with swagger doc code go here
@@ -141,6 +141,5 @@ public class AccountController {
 
         return new ResponseEntity<>(ibans, HttpStatus.OK);
     }
-
 
 }

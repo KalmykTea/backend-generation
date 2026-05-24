@@ -178,11 +178,11 @@ public class TransactionService {
 
     @Transactional(readOnly = true)
     public Page<TransferResponseDTO> getFilteredTransactions(TransactionFilterRequest filters, Pageable pageable, Long userId) {
-//        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User loggedInUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = this.userRepository.findById(userId).orElseThrow();
-//        if (!user.getId().equals(userId)) {
-//            throw new IllegalArgumentException("User is not authorized to view transactions for this user.");
-//        }
+        if (!user.getId().equals(loggedInUser.getId())) {
+            throw new IllegalArgumentException("User is not authorized to view transactions for this user.");
+        }
         List<Account> userAccounts = accountRepository.findByUserId(userId);
         List<String> accountIbans = userAccounts.stream().map(Account::getIban).toList();
 

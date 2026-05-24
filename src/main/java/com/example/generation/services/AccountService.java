@@ -141,8 +141,8 @@ public class AccountService {
                 .map(this.accountResponseDTOMapper::toDTO);
     }
 
-    public AccountClosureResponse closeAccount(String accountId) {
-        Account account = this.findById(accountId);
+    public AccountClosureResponse closeAccount(String iban) {
+        Account account = this.getAccountByIbanOrThrow(iban);
 
         if (account.getAccountStatus() == AccountStatus.CLOSED) {
             throw new AccountAlreadyClosedException("Account is already closed.");
