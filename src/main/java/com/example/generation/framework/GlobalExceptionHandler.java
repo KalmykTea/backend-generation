@@ -1,6 +1,7 @@
 package com.example.generation.framework;
 
 import com.example.generation.framework.exceptions.DailyLimitReachedException;
+import com.example.generation.framework.exceptions.EntityAlreadyExistsException;
 import com.example.generation.framework.exceptions.InsufficientBalanceException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
@@ -91,5 +92,12 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(), "Unexpected Server Error", List.of()
         ),  HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(EntityAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleEntityAlreadyExists(EntityAlreadyExistsException ex) {
+        return new ResponseEntity<>(new ErrorResponse(
+                HttpStatus.CONFLICT.value(), "Entity Already Exists", List.of(Map.of("field", ex.getField(), "message", ex.getMessage()))
+        ), HttpStatus.CONFLICT);
     }
 }
