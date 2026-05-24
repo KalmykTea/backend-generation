@@ -231,7 +231,7 @@ public class TransactionController {
     @GetMapping("/{userId}")
     @PreAuthorize("hasRole('CUSTOMER') and @userSecurityService.hasAccessToUser(principal, #userId)")
     @Operation(summary = "Search and filter customer transactions", description = "Retrieve a paginated list of transactions for the authenticated customer with optional filters.")
-    public Map<String, Object> getCustomerTransactions(
+    public ResponseEntity<Page<TransferResponseDTO>> getCustomerTransactions(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(required = false) BigDecimal amountLt,
@@ -246,31 +246,19 @@ public class TransactionController {
         Pageable pageable = PageRequest.of(page, size);
         Page<TransferResponseDTO> transactionPage = transactionService.getFilteredTransactions(filters, pageable, userId);
 
-        return Map.of(
-                "content", transactionPage.getContent(),
-                "page", transactionPage.getNumber(),
-                "size", transactionPage.getSize(),
-                "totalElements", transactionPage.getTotalElements(),
-                "totalPages", transactionPage.getTotalPages()
-        );
+        return new ResponseEntity<>(transactionPage, HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('EMPLOYEE')")
     @Operation(summary = "Get paginated list of all transactions", description = "Retrieve a paginated list of all transactions. Restricted to employees.")
-    public Map<String, Object> getPaginatedTransactions(
+    public ResponseEntity<Page<TransferResponseDTO>> getPaginatedTransactions(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
         Page<TransferResponseDTO> transactionPage = transactionService.getPaginatedTransactions(pageable);
 
-        return Map.of(
-                "content", transactionPage.getContent(),
-                "page", transactionPage.getNumber(),
-                "size", transactionPage.getSize(),
-                "totalElements", transactionPage.getTotalElements(),
-                "totalPages", transactionPage.getTotalPages()
-        );
+        return new ResponseEntity<>(transactionPage, HttpStatus.OK);
     }
 
     //get transactions by account IBAN

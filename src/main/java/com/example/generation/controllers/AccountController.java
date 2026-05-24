@@ -55,20 +55,14 @@ public class AccountController {
     @GetMapping
     @PreAuthorize("hasRole('EMPLOYEE')")
     @Operation(summary = "Get paginated list of all customer accounts", description = "Retrieve a paginated list of all customer accounts. Restricted to employees.")
-    public Map<String, Object> getPaginatedAccounts(
+    public ResponseEntity<Page<AccountFullResponseDTO>> getPaginatedAccounts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
         Page<AccountFullResponseDTO> accountPage = accountService.getPaginatedAccounts(pageable);
 
-        return Map.of(
-                "content", accountPage.getContent(),
-                "page", accountPage.getNumber(),
-                "size", accountPage.getSize(),
-                "totalElements", accountPage.getTotalElements(),
-                "totalPages", accountPage.getTotalPages()
-        );
+        return new ResponseEntity<>(accountPage, HttpStatus.OK);
     }
 
     //close account
