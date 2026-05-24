@@ -3,6 +3,8 @@ package com.example.generation.dtos.ResponseDTOs;
 import com.example.generation.enums.TransactionType;
 import lombok.Builder;
 import lombok.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 

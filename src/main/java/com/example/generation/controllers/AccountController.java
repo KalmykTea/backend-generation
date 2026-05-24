@@ -1,7 +1,6 @@
 package com.example.generation.controllers;
 
 import com.example.generation.dtos.RequestDTOs.AccountLimitsRequestDTO;
-import com.example.generation.dtos.RequestDTOs.AccountFullRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.AccountClosureResponse;
 import com.example.generation.dtos.ResponseDTOs.AccountFullResponseDTO;
 import com.example.generation.dtos.ResponseDTOs.AccountLimitsResponseDTO;

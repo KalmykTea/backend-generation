@@ -2,7 +2,6 @@ package com.example.generation.services;
 
 import com.example.generation.domain.policy.TransactionPolicy;
 import com.example.generation.dtos.RequestDTOs.ATMRequestDTO;
-import com.example.generation.dtos.RequestDTOs.BaseTransactionRequestDTO;
 import com.example.generation.dtos.RequestDTOs.TransactionRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.ATMResponseDTO;
 import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
@@ -10,13 +9,10 @@ import com.example.generation.entities.Account;
 import com.example.generation.dtos.RequestDTOs.TransactionFilterRequest;
 import com.example.generation.entities.Transaction;
 import com.example.generation.entities.User;
-import com.example.generation.enums.AccountStatus;
-import com.example.generation.enums.AccountType;
 import com.example.generation.enums.Role;
 import com.example.generation.enums.TransactionType;
 import com.example.generation.mappers.ResponseDTOMappers.ATMResponseDTOMapper;
 import com.example.generation.mappers.ResponseDTOMappers.TransactionResponseDTOMapper;
-import com.example.generation.mappers.ResponseDTOMappers.TransferResponseDTOMapper;
 import com.example.generation.repositories.AccountRepository;
 import com.example.generation.repositories.TransactionRepository;
 import org.springframework.data.domain.Page;
@@ -26,12 +22,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import com.example.generation.repositories.UserRepository;
 import jakarta.persistence.EntityManager;
 import org.hibernate.Session;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,7 +43,7 @@ public class TransactionService {
 
     public TransactionService(TransactionRepository transactionRepository,
                               AccountService accountService,
-                              TransferResponseDTOMapper transactionResponseDTOMapper,
+                              TransactionResponseDTOMapper transactionResponseDTOMapper,
                               ATMResponseDTOMapper atmResponseDTOMapper,
                               AccountRepository accountRepository,
                               UserRepository userRepository,
@@ -164,7 +154,7 @@ public class TransactionService {
     }
 
     @Transactional(readOnly = true)
-    public Page<TransferResponseDTO> getFilteredTransactions(TransactionFilterRequest filters, Pageable pageable, Long userId) {
+    public Page<TransactionResponseDTO> getFilteredTransactions(TransactionFilterRequest filters, Pageable pageable, Long userId) {
         User loggedInUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = this.userRepository.findById(userId).orElseThrow();
         if (!user.getId().equals(loggedInUser.getId())) {
@@ -185,12 +175,12 @@ public class TransactionService {
         Page<Transaction> transactions = transactionRepository.findAll(pageable);
         this.cleanFilters(session);
 
-        return transactions.map(transferResponseDTOMapper::toDTO);
+        return transactions.map(transactionResponseDTOMapper::toDTO);
     }
 
-    public Page<TransferResponseDTO> getPaginatedTransactions(Pageable pageable) {
+    public Page<TransactionResponseDTO> getPaginatedTransactions(Pageable pageable) {
         Page<Transaction> transactions = transactionRepository.findAll(pageable);
-        return transactions.map(transferResponseDTOMapper::toDTO);
+        return transactions.map(transactionResponseDTOMapper::toDTO);
     }
 
     private Session enableFilters(TransactionFilterRequest filters)
