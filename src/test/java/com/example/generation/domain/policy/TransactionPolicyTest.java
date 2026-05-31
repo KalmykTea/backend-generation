@@ -25,9 +25,9 @@ public class TransactionPolicyTest {
     private TransactionRequestDTO transactionRequestDTO2;
     private Account checkingAccount1;
     private Account checkingAccount2;
-    private Account checkingAccount3;
     private Account savingsAccount;
     private Account inactiveAccount;
+    private final BigDecimal currentWithdrawalTotal = BigDecimal.valueOf(10);
 
     @BeforeEach
     void setUp(){
@@ -40,7 +40,6 @@ public class TransactionPolicyTest {
         User customer2 = new User();
         checkingAccount1 = new Account();
         checkingAccount2 = new Account();
-        checkingAccount3 = new Account();
         savingsAccount = new Account();
         inactiveAccount = new Account();
 
@@ -57,15 +56,13 @@ public class TransactionPolicyTest {
         checkingAccount1.setUser(customer1);
         checkingAccount1.setAccountType(AccountType.CHECKING);
         checkingAccount1.setAccountStatus(AccountStatus.ACTIVE);
-        checkingAccount1.setDailyTransfer(BigDecimal.valueOf(10));
+        checkingAccount1.setBalance(BigDecimal.ZERO);
         checkingAccount1.setDailyLimit(BigDecimal.valueOf(100));
         checkingAccount1.setAbsoluteLimit(BigDecimal.valueOf(-100));
 
         checkingAccount2.setUser(customer2);
         checkingAccount2.setAccountType(AccountType.CHECKING);
         checkingAccount2.setAccountStatus(AccountStatus.ACTIVE);
-
-        checkingAccount3.setUser(customer1);
 
         savingsAccount.setUser(customer2);
         savingsAccount.setAccountType(AccountType.SAVINGS);
@@ -113,7 +110,7 @@ public class TransactionPolicyTest {
     @Test
     void enforceAccountsMustBelongToDifferentUsers_throwsForSameUsers(){
         assertThrows(IllegalArgumentException.class,()->
-                transactionPolicy.enforceAccountsMustBelongToDifferentUsers(checkingAccount1, checkingAccount3));
+                transactionPolicy.enforceAccountsMustBelongToDifferentUsers(checkingAccount1, checkingAccount1));
     }
 
     @Test
@@ -164,14 +161,14 @@ public class TransactionPolicyTest {
     void enforceDailyLimit_throwsForExceededDailyLimit(){
         assertThrows(DailyLimitReachedException.class,()->
                 transactionPolicy.enforceDailyLimit(transactionRequestDTO2.getTransactionType(), checkingAccount1.getDailyLimit(),
-                        checkingAccount1.getDailyTransfer().add(transactionRequestDTO2.getAmount())));
+                        currentWithdrawalTotal.add(transactionRequestDTO2.getAmount())));
     }
 
     @Test
     void enforceDailyLimit_allowsUnexceededDailyLimit(){
         assertDoesNotThrow(()->
                 transactionPolicy.enforceDailyLimit(transactionRequestDTO.getTransactionType(), checkingAccount1.getDailyLimit(),
-                        checkingAccount1.getDailyTransfer().add(transactionRequestDTO.getAmount())));
+                        currentWithdrawalTotal.add(transactionRequestDTO.getAmount())));
     }
 
     @Test
@@ -179,12 +176,12 @@ public class TransactionPolicyTest {
         assertThrows(InsufficientBalanceException.class,()->
                 transactionPolicy.enforceAbsoluteLimit(checkingAccount1.getAbsoluteLimit(),
                         checkingAccount1.getBalance().add(transactionRequestDTO2.getAmount().negate())));
-    }//limit = -100 > amount = -200
+    }//0 + (-200) exceeds absolute limit of -100
 
     @Test
     void enforceAbsoluteLimit_allowsUnexceededAbsoluteLimit(){
         assertDoesNotThrow(()->
                 transactionPolicy.enforceAbsoluteLimit(checkingAccount1.getAbsoluteLimit(),
                         checkingAccount1.getBalance().add(transactionRequestDTO.getAmount().negate())));
-    }//limit = -100 < amount = -20
+    }//0 + (-20) does not exceed limit of -100
 }

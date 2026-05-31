@@ -47,10 +47,6 @@ public class AccountService {
         this.accountPolicy = accountPolicy;
     }
 
-    public Iterable<Account> findAll() {
-        return accountRepository.findAll();
-    }
-
     public List<Account> findAccountsByUserId(Long userId) {
         return accountRepository.findByUserId(userId);
     }
@@ -81,10 +77,6 @@ public class AccountService {
     public Account getAccountByIbanOrThrow(String iban) {
         return accountRepository.findByIban(iban)
                 .orElseThrow(() -> new EntityNotFoundException("Account with IBAN " + iban + " not found"));
-    }
-
-    public void deleteByIban(String iban) {
-        accountRepository.deleteById(iban);
     }
 
     public AccountFullResponseDTO getAccountByIban(String iban) {

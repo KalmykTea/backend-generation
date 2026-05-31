@@ -29,6 +29,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 @Service
 public class TransactionService {
@@ -57,19 +58,6 @@ public class TransactionService {
         this.transactionResponseDTOMapper = transactionResponseDTOMapper;
         this.atmResponseDTOMapper = atmResponseDTOMapper;
         this.transactionPolicy = transactionPolicy;
-    }
-
-    // basic stuff, input custom logic according to your user stories
-    public Iterable<Transaction> findAll(){
-        return transactionRepository.findAll();
-    }
-
-    public Optional<Transaction> findById(Long id){
-        return transactionRepository.findById(id);
-    }
-
-    public Transaction save(Transaction transaction){
-        return transactionRepository.save(transaction);
     }
 
     public Page<TransactionResponseDTO> getTransactionsByAccountIBAN(String accountIBAN, Pageable pageable) {
@@ -135,17 +123,12 @@ public class TransactionService {
     }
 
     private void transact(Account account, BigDecimal amount, TransactionType transactionType) {
-        if (!LocalDate.now().equals(account.getLastTransferDate())) {
-            account.setDailyTransfer(BigDecimal.ZERO);
-            account.setLastTransferDate(LocalDate.now());
-        }
-        BigDecimal currentTransferTally = account.getDailyTransfer().add(amount);
+        BigDecimal currentWithdrawalTotal = transactionRepository.getLast24HoursWithdrawalTotal(account.getIban(), LocalDateTime.now().minusHours(24));
         BigDecimal newBalance = transactionType == TransactionType.DEPOSIT
                 ? account.getBalance().add(amount)
                 : account.getBalance().subtract(amount);
-        transactionPolicy.enforceDailyLimit(transactionType, account.getDailyLimit(), currentTransferTally);
+        transactionPolicy.enforceDailyLimit(transactionType, account.getDailyLimit(), currentWithdrawalTotal.add(amount));
         transactionPolicy.enforceAbsoluteLimit(account.getAbsoluteLimit(), newBalance);
-        account.setDailyTransfer(currentTransferTally);
         account.setBalance(newBalance);
     }
 
