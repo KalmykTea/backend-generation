@@ -33,23 +33,17 @@ public class AccountService {
     private final AccountRepository accountRepository;
     private final AccountLimitsResponseDTOMapper accountLimitsResponseDTOMapper;
     private final AccountFullResponseDTOMapper accountFullResponseDTOMapper;
-    private final TransactionRepository transactionRepository;
-    private final AccountFullResponseDTOMapper accountResponseDTOMapper;
     private final AccountPolicy accountPolicy;
 
     public AccountService (
             AccountRepository accountRepository,
             AccountFullResponseDTOMapper accountFullResponseDTOMapper,
-            TransactionRepository transactionRepository,
-            AccountFullResponseDTOMapper accountResponseDTOMapper,
             AccountLimitsResponseDTOMapper accountLimitsResponseDTOMapper,
             AccountPolicy accountPolicy
             ) {
         this.accountRepository = accountRepository;
         this.accountLimitsResponseDTOMapper = accountLimitsResponseDTOMapper;
         this.accountFullResponseDTOMapper = accountFullResponseDTOMapper;
-        this.transactionRepository = transactionRepository;
-        this.accountResponseDTOMapper = accountResponseDTOMapper;
         this.accountPolicy = accountPolicy;
     }
 
@@ -158,7 +152,7 @@ public class AccountService {
 
     public Page<AccountFullResponseDTO> getPaginatedAccounts(Pageable pageable) {
         return accountRepository.findAll(pageable)
-                .map(this.accountResponseDTOMapper::toDTO);
+                .map(this.accountFullResponseDTOMapper::toDTO);
     }
 
     public AccountClosureResponse closeAccount(String iban) {

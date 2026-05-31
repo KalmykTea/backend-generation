@@ -21,19 +21,6 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
-        String name = ex.getName();
-        String type = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "unknown";
-        String message = name + " should be of type " + type;
-        if (ex.getRequiredType() != null && java.time.LocalDate.class.isAssignableFrom(ex.getRequiredType())) {
-            message = "Invalid date format for " + name + ". Expected format is YYYY-MM-DD.";
-        }
-        return new ResponseEntity<>(new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(), message, List.of()
-        ),  HttpStatus.BAD_REQUEST);
-    }
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationError(MethodArgumentNotValidException ex) {
         List<Map<String, String>> fieldErrors = ex.getBindingResult().getFieldErrors()

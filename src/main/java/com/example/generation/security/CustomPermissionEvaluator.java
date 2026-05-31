@@ -42,6 +42,14 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
         return false;
     }
 
+    public boolean canViewUserTransactions(Authentication authentication, Object targetDomainObject) {
+        User user = getAuthenticatedUser(authentication);
+        if (targetDomainObject instanceof Long userId) {
+            return user.getId().equals(userId);
+        }
+        return false;
+    }
+
     private User getAuthenticatedUser(Authentication authentication) {
         cpePolicy.enforceUserIsAuthenticated(authentication);
         return (User) authentication.getPrincipal();

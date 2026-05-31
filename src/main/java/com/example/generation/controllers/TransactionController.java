@@ -230,8 +230,7 @@ public class TransactionController {
     }
 
     @GetMapping("/{userId}")
-    @PreAuthorize("hasAuthority('CUSTOMER')")
-//    @PreAuthorize("hasRole('CUSTOMER') and @userSecurityService.hasAccessToUser(principal, #userId)")
+    @PreAuthorize("hasAuthority('CUSTOMER') and @permissionEvaluator.canViewUserTransactions(authentication, #userId)")
     @Operation(summary = "Search and filter customer transactions", description = "Retrieve a paginated list of transactions for the authenticated customer with optional filters.")
     public ResponseEntity<Page<TransactionResponseDTO>> getCustomerTransactions(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
