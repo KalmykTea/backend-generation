@@ -1,9 +1,12 @@
 package com.example.generation.controllers;
 
 import com.example.generation.dtos.RequestDTOs.LoginRequestDTO;
+import com.example.generation.dtos.RequestDTOs.UserFullRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.UserResponseDTO;
 import com.example.generation.entities.Account;
 import com.example.generation.entities.User;
+import com.example.generation.framework.groups.OnCreate;
+import com.example.generation.mappers.RequestDTOMappers.UserFullRequestDTOMapper;
 import com.example.generation.mappers.ResponseDTOMappers.UserResponseDTOMapper;
 import com.example.generation.services.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,6 +18,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -24,10 +28,12 @@ import org.springframework.web.server.ResponseStatusException;
 public class AuthController {
     final private AuthService authService;
     private final UserResponseDTOMapper userResponseDTOMapper;
+    private final UserFullRequestDTOMapper userFullRequestDTOMapper;
 
-    public AuthController(AuthService authService,  UserResponseDTOMapper userResponseDTOMapper) {
+    public AuthController(AuthService authService, UserResponseDTOMapper userResponseDTOMapper, UserFullRequestDTOMapper userFullRequestDTOMapper) {
         this.authService = authService;
         this.userResponseDTOMapper = userResponseDTOMapper;
+        this.userFullRequestDTOMapper = userFullRequestDTOMapper;
     }
 
     @PostMapping("/login")
@@ -60,5 +66,13 @@ public class AuthController {
         }
 
         return this.userResponseDTOMapper.toDTO(user);
+    }
+
+    @Operation(summary = "Register a new customer")
+    @PostMapping("/register")
+    public ResponseEntity<String> register(@Validated(OnCreate.class) @RequestBody UserFullRequestDTO userRequestDTO) {
+        User user = userFullRequestDTOMapper.toEntity(userRequestDTO);
+        String token = authService.register(user);
+        return new ResponseEntity<>(token, HttpStatus.CREATED);
     }
 }
