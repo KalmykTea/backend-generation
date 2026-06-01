@@ -108,13 +108,6 @@ public class GlobalExceptionHandler {
         ),  HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(EntityAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleEntityAlreadyExists(EntityAlreadyExistsException ex) {
-        return new ResponseEntity<>(new ErrorResponse(
-                HttpStatus.CONFLICT.value(), "Entity Already Exists", List.of(Map.of("field", ex.getField(), "message", ex.getMessage()))
-        ), HttpStatus.CONFLICT);
-    }
-
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
         ex.printStackTrace();
