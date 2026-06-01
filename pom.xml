@@ -151,7 +151,6 @@
                 <version>3.13.0</version>
                 <configuration>
                     <compilerArgs>
-                        --enable-preview
                     </compilerArgs>
                     <annotationProcessorPaths>
                         <path>

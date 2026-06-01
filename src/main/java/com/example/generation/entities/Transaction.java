@@ -1,5 +1,8 @@
 package com.example.generation.entities;
-
+import jakarta.validation.constraints.Null;
+import org.hibernate.annotations.Filter;
+import org.hibernate.annotations.FilterDef;
+import org.hibernate.annotations.ParamDef;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -8,6 +11,7 @@ import com.example.generation.enums.TransactionType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -15,6 +19,19 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Entity
 @Table(name = "transaction")
+@FilterDef(name = "dateRangeFilter", parameters = {
+    @ParamDef(name = "startDate", type = java.time.LocalDateTime.class),
+    @ParamDef(name = "endDate", type = java.time.LocalDateTime.class)
+})
+@FilterDef(name = "amountLtFilter", parameters = @ParamDef(name = "amountLt", type = java.math.BigDecimal.class))
+@FilterDef(name = "amountGtFilter", parameters = @ParamDef(name = "amountGt", type = java.math.BigDecimal.class))
+@FilterDef(name = "amountEqFilter", parameters = @ParamDef(name = "amountEq", type = java.math.BigDecimal.class))
+@FilterDef(name = "userAccountsFilter", parameters = @ParamDef(name = "accountIbans", type = String.class))
+@Filter(name = "dateRangeFilter", condition = "timestamp >= :startDate AND timestamp <= :endDate")
+@Filter(name = "amountLtFilter", condition = "amount < :amountLt")
+@Filter(name = "amountGtFilter", condition = "amount > :amountGt")
+@Filter(name = "amountEqFilter", condition = "amount = :amountEq")
+@Filter(name = "userAccountsFilter", condition = "(from_account_iban IN (:accountIbans) OR to_account_iban IN (:accountIbans))")
 public class Transaction {
 
     @Id
