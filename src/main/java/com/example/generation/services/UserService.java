@@ -4,6 +4,7 @@ import com.example.generation.dtos.RequestDTOs.AccountLimitsRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.UserResponseDTO;
 import com.example.generation.entities.User;
 import com.example.generation.enums.UserStatus;
+import com.example.generation.framework.exceptions.EntityAlreadyExistsException;
 import com.example.generation.mappers.ResponseDTOMappers.UserResponseDTOMapper;
 import com.example.generation.repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -34,7 +35,19 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException{
-        return userRepository.findUserByEmail(email).orElseThrow(() -> new UsernameNotFoundException(email));
+        return userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException(email));
+    }
+
+    @Transactional
+    public User register(User user) {
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new EntityAlreadyExistsException("email", "Email already exists");
+        }
+        if (userRepository.existsByBsnNumber(user.getBsnNumber())) {
+            throw new EntityAlreadyExistsException("bsnNumber", "BSN already exists");
+        }
+
+        return userRepository.save(user);
     }
 
     // basic stuff, input custom logic according to your user stories
