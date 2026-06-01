@@ -151,9 +151,8 @@ public class TransactionController {
             )
             @RequestBody @Valid ATMRequestDTO requestDTO
     ) {
-
+        requestDTO.setTransactionType(TransactionType.WITHDRAWAL);
         return transactionService.processATMRequest(requestDTO);
-    }
 
     @PostMapping("/deposit")
     @Operation(summary = "Deposit money", description = "Deposit funds into an account via ATM")
