@@ -1,22 +1,24 @@
 package com.example.generation.controllers;
 
-import com.example.generation.dtos.RequestDTOs.UserRequestDTO;
+import com.example.generation.dtos.RequestDTOs.AccountLimitsRequestDTO;
+import com.example.generation.dtos.RequestDTOs.UserFullRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.UserResponseDTO;
 import com.example.generation.entities.User;
 import com.example.generation.framework.groups.OnCreate;
-import com.example.generation.mappers.RequestDTOMappers.UserRequestDTOMapper;
+import com.example.generation.mappers.RequestDTOMappers.UserFullRequestDTOMapper;
 import com.example.generation.mappers.ResponseDTOMappers.UserResponseDTOMapper;
 import com.example.generation.services.AddressService;
 import com.example.generation.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Tag(name = "Users", description = "Operations for managing users")
 @RestController
@@ -24,10 +26,10 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
     private final UserService userService;
     private final AddressService addressService;
-    private final UserRequestDTOMapper userRequestDTOMapper;
+    private final UserFullRequestDTOMapper userRequestDTOMapper;
     private final UserResponseDTOMapper userResponseDTOMapper;
 
-    public UserController(UserService userService, AddressService addressService, UserRequestDTOMapper userRequestDTOMapper, UserResponseDTOMapper userResponseDTOMapper) {
+    public UserController(UserService userService, AddressService addressService, UserFullRequestDTOMapper userRequestDTOMapper, UserResponseDTOMapper userResponseDTOMapper) {
         this.userService = userService;
         this.addressService = addressService;
         this.userRequestDTOMapper = userRequestDTOMapper;
@@ -36,7 +38,7 @@ public class UserController {
 
     @Operation(summary = "Register a new customer")
     @PostMapping("/register")
-    public ResponseEntity<UserResponseDTO> register(@Validated(OnCreate.class) @RequestBody UserRequestDTO userRequestDTO) {
+    public ResponseEntity<UserResponseDTO> register(@Validated(OnCreate.class) @RequestBody UserFullRequestDTO userRequestDTO) {
         User user = userRequestDTOMapper.toEntity(userRequestDTO);
         User registeredUser = userService.register(user);
         return new ResponseEntity<>(userResponseDTOMapper.toDTO(registeredUser), HttpStatus.CREATED);

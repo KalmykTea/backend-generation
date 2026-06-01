@@ -3,10 +3,8 @@ package com.example.generation.services;
 import com.example.generation.dtos.RequestDTOs.AccountLimitsRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.UserResponseDTO;
 import com.example.generation.entities.User;
-import com.example.generation.enums.Role;
 import com.example.generation.enums.UserStatus;
 import com.example.generation.framework.exceptions.EntityAlreadyExistsException;
-import com.example.generation.enums.UserStatus;
 import com.example.generation.mappers.ResponseDTOMappers.UserResponseDTOMapper;
 import com.example.generation.repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -15,7 +13,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -38,7 +35,7 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException{
-        return userRepository.findUserByEmail(email).orElseThrow(() -> new UsernameNotFoundException(email));
+        return userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException(email));
     }
 
     @Transactional
