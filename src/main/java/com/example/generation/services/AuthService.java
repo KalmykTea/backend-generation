@@ -32,7 +32,7 @@ public class AuthService {
 
     public String login(LoginRequestDTO loginRequestDTO)
     {
-        User user = userRepository.findUserByEmail(loginRequestDTO.getEmail()).orElseThrow(() -> new UsernameNotFoundException("Invalid username or password."));
+        User user = userRepository.findByEmail(loginRequestDTO.getEmail()).orElseThrow(() -> new UsernameNotFoundException("Invalid username or password."));
 
         if(passwordEncoder.matches(loginRequestDTO.getPassword(), user.getPassword()))
         {

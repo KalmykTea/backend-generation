@@ -1,8 +1,13 @@
 package com.example.generation.controllers;
 
 import com.example.generation.dtos.RequestDTOs.AccountLimitsRequestDTO;
+import com.example.generation.dtos.RequestDTOs.UserFullRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.UserResponseDTO;
+import com.example.generation.entities.User;
 import com.example.generation.framework.groups.OnCreate;
+import com.example.generation.mappers.RequestDTOMappers.UserFullRequestDTOMapper;
+import com.example.generation.mappers.ResponseDTOMappers.UserResponseDTOMapper;
+import com.example.generation.services.AddressService;
 import com.example.generation.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,10 +24,24 @@ import java.util.List;
 @RestController
 @RequestMapping("users")
 public class UserController {
-    final private UserService userService;
+    private final UserService userService;
+    private final AddressService addressService;
+    private final UserFullRequestDTOMapper userRequestDTOMapper;
+    private final UserResponseDTOMapper userResponseDTOMapper;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, AddressService addressService, UserFullRequestDTOMapper userRequestDTOMapper, UserResponseDTOMapper userResponseDTOMapper) {
         this.userService = userService;
+        this.addressService = addressService;
+        this.userRequestDTOMapper = userRequestDTOMapper;
+        this.userResponseDTOMapper = userResponseDTOMapper;
+    }
+
+    @Operation(summary = "Register a new customer")
+    @PostMapping("/register")
+    public ResponseEntity<UserResponseDTO> register(@Validated(OnCreate.class) @RequestBody UserFullRequestDTO userRequestDTO) {
+        User user = userRequestDTOMapper.toEntity(userRequestDTO);
+        User registeredUser = userService.register(user);
+        return new ResponseEntity<>(userResponseDTOMapper.toDTO(registeredUser), HttpStatus.CREATED);
     }
 
     // controller methods based on user stories with swagger doc code go here

@@ -3,19 +3,30 @@ package com.example.generation.services;
 import com.example.generation.domain.policy.AccountPolicy;
 import com.example.generation.dtos.RequestDTOs.AccountLimitsRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.AccountFullResponseDTO;
+import com.example.generation.dtos.ResponseDTOs.AccountClosureResponse;
 import com.example.generation.dtos.ResponseDTOs.AccountLimitsResponseDTO;
 import com.example.generation.entities.Account;
 import com.example.generation.entities.User;
 import com.example.generation.enums.AccountType;
 import com.example.generation.mappers.ResponseDTOMappers.AccountFullResponseDTOMapper;
 import com.example.generation.mappers.ResponseDTOMappers.AccountLimitsResponseDTOMapper;
+import com.example.generation.entities.Transaction;
+import com.example.generation.enums.AccountStatus;
+import com.example.generation.framework.exceptions.AccountAlreadyClosedException;
+import com.example.generation.framework.exceptions.AccountBalanceNotEmptyException;
 import com.example.generation.repositories.AccountRepository;
+import com.example.generation.repositories.TransactionRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 public class AccountService {
@@ -26,18 +37,14 @@ public class AccountService {
 
     public AccountService (
             AccountRepository accountRepository,
-            AccountLimitsResponseDTOMapper accountLimitsResponseDTOMapper,
             AccountFullResponseDTOMapper accountFullResponseDTOMapper,
+            AccountLimitsResponseDTOMapper accountLimitsResponseDTOMapper,
             AccountPolicy accountPolicy
-    ) {
+            ) {
         this.accountRepository = accountRepository;
         this.accountLimitsResponseDTOMapper = accountLimitsResponseDTOMapper;
         this.accountFullResponseDTOMapper = accountFullResponseDTOMapper;
         this.accountPolicy = accountPolicy;
-    }
-
-    public Iterable<Account> findAll() {
-        return accountRepository.findAll();
     }
 
     public List<Account> findAccountsByUserId(Long userId) {
@@ -55,6 +62,14 @@ public class AccountService {
         return accountLimitsResponseDTOMapper.toDTO(accountRepository.save(existing));
     }
 
+    public Account findById(String id) {
+        Optional<Account> account = accountRepository.findById(id);
+        if (account.isPresent()) {
+            return account.get();
+        }
+        else throw new EntityNotFoundException("Account with id: " + id + " not found");
+    }
+
     public void save(Account account) {
         accountRepository.save(account);
     }
@@ -62,10 +77,6 @@ public class AccountService {
     public Account getAccountByIbanOrThrow(String iban) {
         return accountRepository.findByIban(iban)
                 .orElseThrow(() -> new EntityNotFoundException("Account with IBAN " + iban + " not found"));
-    }
-
-    public void deleteByIban(String iban) {
-        accountRepository.deleteById(iban);
     }
 
     public AccountFullResponseDTO getAccountByIban(String iban) {
@@ -126,4 +137,36 @@ public class AccountService {
 
         return iban;
     }
+
+    public void deleteById(String id) {
+        accountRepository.deleteById(id);
+    }
+
+    public Page<AccountFullResponseDTO> getPaginatedAccounts(Pageable pageable) {
+        return accountRepository.findAll(pageable)
+                .map(this.accountFullResponseDTOMapper::toDTO);
+    }
+
+    public AccountClosureResponse closeAccount(String iban) {
+        Account account = this.getAccountByIbanOrThrow(iban);
+
+        if (account.getAccountStatus() == AccountStatus.CLOSED) {
+            throw new AccountAlreadyClosedException("Account is already closed.");
+        }
+
+        if (account.getBalance().compareTo(BigDecimal.ZERO) != 0) {
+            throw new AccountBalanceNotEmptyException("Account balance must be zero before closing.");
+        }
+
+        account.setAccountStatus(AccountStatus.CLOSED);
+        accountRepository.save(account);
+//Use maybe mapper???
+        return new AccountClosureResponse(
+                account.getIban(),
+                account.getAccountStatus(),
+                LocalDateTime.now(),
+                "Account successfully closed."
+        );
+    }
+
 }

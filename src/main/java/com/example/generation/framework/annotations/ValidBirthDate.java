@@ -9,7 +9,7 @@ import jakarta.validation.constraints.Past;
 
 import java.lang.annotation.*;
 
-@NotNull(message = "Birthdate cannot be null")
+@NotNull
 @Past(message = "Birthdate must be in the past")
 @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)

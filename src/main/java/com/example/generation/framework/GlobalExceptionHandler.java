@@ -1,5 +1,7 @@
 package com.example.generation.framework;
 
+import com.example.generation.framework.exceptions.AccountAlreadyClosedException;
+import com.example.generation.framework.exceptions.AccountBalanceNotEmptyException;
 import com.example.generation.framework.exceptions.DailyLimitReachedException;
 import com.example.generation.framework.exceptions.EntityAlreadyExistsException;
 import com.example.generation.framework.exceptions.InsufficientBalanceException;
@@ -44,6 +46,13 @@ public class GlobalExceptionHandler {
         ),  HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(EntityAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleEntityAlreadyExists(EntityAlreadyExistsException ex) {
+        return new ResponseEntity<>(new ErrorResponse(
+                HttpStatus.CONFLICT.value(), "Entity Already Exists", List.of(Map.of("field", ex.getField(), "message", ex.getMessage()))
+        ), HttpStatus.CONFLICT);
+    }
+
     @ExceptionHandler(InsufficientBalanceException.class)
     public ResponseEntity<ErrorResponse> handleInsufficientBalance(InsufficientBalanceException ex) {
         return new ResponseEntity<>(new ErrorResponse(
@@ -77,6 +86,19 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(new ErrorResponse(
                 HttpStatus.UNAUTHORIZED.value(), ex.getMessage(), List.of()
         ),   HttpStatus.UNAUTHORIZED);
+    }
+    @ExceptionHandler(AccountAlreadyClosedException.class)
+    public ResponseEntity<ErrorResponse> handleAccountAlreadyClosed(AccountAlreadyClosedException ex) {
+        return new ResponseEntity<>(new ErrorResponse(
+                HttpStatus.CONFLICT.value(), ex.getMessage(), List.of()
+        ), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(AccountBalanceNotEmptyException.class)
+    public ResponseEntity<ErrorResponse> handleAccountBalanceNotEmpty(AccountBalanceNotEmptyException ex) {
+        return new ResponseEntity<>(new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(), ex.getMessage(), List.of()
+        ), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
