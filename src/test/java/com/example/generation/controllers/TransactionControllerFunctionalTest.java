@@ -88,7 +88,7 @@ public class TransactionControllerFunctionalTest {
                 TransactionType.DEPOSIT
         );
 
-        performPostForATMRequest("/transactions/withdraw", deposit)
+        performPostForATMRequest("/transactions/deposit", deposit)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value("Validation Failed"))
