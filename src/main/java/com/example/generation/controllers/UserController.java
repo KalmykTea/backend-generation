@@ -43,4 +43,27 @@ public class UserController {
     }
 
     // controller methods based on user stories with swagger doc code go here
+
+    @Operation(summary = "Get list of customers pending approval")
+    @GetMapping("/pending")
+    @PreAuthorize("hasAuthority('EMPLOYEE')")
+    public ResponseEntity<List<UserResponseDTO>> getPendingUsers() {
+        List<UserResponseDTO> result = userService.getPendingUsers();
+
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
+    @Operation(
+            summary = "Approve user",
+            description = "Approves a user with Pending status. Creates a Current and Savings account with a unique IBAN"
+    )
+    @PostMapping("/{id}/approve")
+    @PreAuthorize("hasAuthority('EMPLOYEE')")
+    public ResponseEntity<UserResponseDTO> approveUser(@PathVariable Long id,
+                                                       @RequestBody @Validated(OnCreate.class)
+                                                       List<@Valid AccountLimitsRequestDTO> accountLimitsRequestDTOS) {
+        UserResponseDTO result = userService.approveUser(id, accountLimitsRequestDTOS);
+
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
 }

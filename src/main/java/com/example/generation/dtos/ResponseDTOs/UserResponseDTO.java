@@ -1,12 +1,12 @@
 package com.example.generation.dtos.ResponseDTOs;
 
-import lombok.Data;
+import lombok.Builder;
+import lombok.Value;
 
-@Data
+@Value
+@Builder
 public class UserResponseDTO {
-    private long id;
-    private AddressResponseDTO address;
-    private String firstName;
-    private String lastName;
-    private String email;
+    long id;
+    String firstName;
+    String lastName;
 }

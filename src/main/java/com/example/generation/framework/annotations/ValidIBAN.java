@@ -1,5 +1,6 @@
 package com.example.generation.framework.annotations;
 
+import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -7,9 +8,10 @@ import jakarta.validation.constraints.Pattern;
 import java.lang.annotation.*;
 
 @NotBlank
-@Pattern(regexp = "NL[A-Za-z][A-Za-z]INHO0[A-Za-z][A-Za-z][A-Za-z][A-Za-z][A-Za-z][A-Za-z][A-Za-z][A-Za-z][A-Za-z]")
+@Pattern(regexp = "NL\\d{2}INHO0\\d{9}")
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
+@Constraint(validatedBy = {})
 @Documented
 public @interface ValidIBAN {
     String message() default "{iban.invalid}";

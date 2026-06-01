@@ -5,6 +5,7 @@ import com.example.generation.framework.annotations.ValidBirthDate;
 import com.example.generation.framework.groups.OnCreate;
 import com.example.generation.framework.groups.OnTransaction;
 import com.example.generation.framework.groups.OnUpdate;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Data;
@@ -12,7 +13,7 @@ import lombok.Data;
 import java.time.LocalDate;
 
 @Data
-public class UserRequestDTO {
+public class UserFullRequestDTO {
 
     @Null(groups = OnCreate.class, message = "ID must be null on creation")
     @NotNull(groups = {OnUpdate.class, OnTransaction.class}, message = "ID is required for updates")

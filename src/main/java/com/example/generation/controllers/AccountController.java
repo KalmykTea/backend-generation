@@ -1,12 +1,11 @@
 package com.example.generation.controllers;
 
-import com.example.generation.dtos.RequestDTOs.AccountRequestDTO;
-import com.example.generation.dtos.RequestDTOs.TransactionRequestDTO;
+import com.example.generation.dtos.RequestDTOs.AccountLimitsRequestDTO;
+import com.example.generation.dtos.ResponseDTOs.AccountFullResponseDTO;
+import com.example.generation.dtos.ResponseDTOs.AccountLimitsResponseDTO;
 import com.example.generation.entities.Account;
-import com.example.generation.framework.groups.OnTransaction;
 import com.example.generation.framework.groups.OnUpdate;
-import com.example.generation.mappers.RequestDTOMappers.AccountRequestDTOMapper;
-import com.example.generation.mappers.RequestDTOMappers.TransactionRequestDTOMapper;
+import com.example.generation.mappers.ResponseDTOMappers.AccountFullResponseDTOMapper;
 import com.example.generation.services.AccountService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -15,74 +14,95 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.groups.Default;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Tag(name = "Accounts", description = "Operations for managing accounts")
 @RestController
 @RequestMapping("accounts")
 public class AccountController {
     final private AccountService accountService;
-    final private AccountRequestDTOMapper accountRequestDTOMapper;
-    private final TransactionRequestDTOMapper transactionRequestDTOMapper;
+    private final AccountFullResponseDTOMapper accountFullResponseDTOMapper;
 
     public AccountController(
             AccountService accountService,
-            AccountRequestDTOMapper accountRequestDTOMapper,
-            TransactionRequestDTOMapper transactionRequestDTOMapper
-    ) {
+            AccountFullResponseDTOMapper accountFullResponseDTOMapper) {
         this.accountService = accountService;
-        this.accountRequestDTOMapper = accountRequestDTOMapper;
-        this.transactionRequestDTOMapper = transactionRequestDTOMapper;
+        this.accountFullResponseDTOMapper = accountFullResponseDTOMapper;
     }
 
     // controller methods based on user stories with swagger doc code go here
-    @PutMapping("/{id}")
-    @Operation(summary = "Update an account", description = "Updates an existing account for the given id using the provided payload.")
+    @PatchMapping("/{iban}")
+    @Operation(summary = "Update an account", description = "Updates an existing account for the given IBAN using the provided payload.")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
                     description = "Account updated successfully",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = Account.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = AccountLimitsResponseDTO.class))
             ),
             @ApiResponse(
                     responseCode = "404",
                     description = "Account not found",
                     content = @Content
-            )
+            ),
+
     })
-    public Account update(
+    @PreAuthorize("hasAuthority('EMPLOYEE')")
+    public AccountLimitsResponseDTO update(
+            @Parameter(description = "IBAN of the account to update")
+            @PathVariable String iban,
             @Parameter(description = "Account payload used to update an existing account")
             @Validated({OnUpdate.class})
             @RequestBody
-            AccountRequestDTO accountRequestDTO,
-            @PathVariable Long id
+            AccountLimitsRequestDTO accountLimitsRequestDTO
     ) {
-            return accountService.update(accountRequestDTOMapper.toEntity(accountRequestDTO), id);
+            return accountService.update(accountLimitsRequestDTO, iban);
     }
 
-    @PutMapping("/{id}/transactions")
-    @Operation(summary = "Withdraw or Deposit", description = "Updates an existing account balance and records the transaction for the given id using the provided payload.")
+    @GetMapping("")
+    @Operation(summary = "Get accounts by user", description = "Returns all accounts belonging to a specific user")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Balance updated successfully",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = Account.class))
+                    description = "Accounts retrieved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = AccountLimitsResponseDTO.class))
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "Account not found",
+                    description = "User not found",
                     content = @Content
             )
     })
-    public Account withdrawOrDeposit(
-            @Parameter(description = "Transaction payload used to update an existing account balance")
-            @Validated({OnTransaction.class, Default.class})
-            @RequestBody TransactionRequestDTO transactionRequestDTO,
-            @PathVariable Long id
-            )
-    {
-        return accountService.withdrawOrDeposit(id, transactionRequestDTOMapper.toEntity(transactionRequestDTO));
+    public List<AccountFullResponseDTO> getAccountsByUserId(
+            @RequestParam Long userId
+    ) {
+        List<Account> accounts = accountService.findAccountsByUserId(userId);
+        return accounts.stream()
+                .map(accountFullResponseDTOMapper::toDTO)
+                .toList();
     }
+
+    @Operation(summary = "Get bank account by IBAN")
+    @GetMapping("/iban")
+    public ResponseEntity<AccountFullResponseDTO> getAccountByIban(@RequestParam String iban) {
+        AccountFullResponseDTO result = accountService.getAccountByIban(iban);
+
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
+    @Operation(summary = "Find user IBAN by first and last name")
+    @GetMapping("/search")
+    @PreAuthorize("hasAuthority('CUSTOMER') or hasAuthority('EMPLOYEE')")
+    public ResponseEntity<List<String>> getIbanByName(@RequestParam String firstName, @RequestParam String lastName) {
+        List<String> ibans = accountService.getIbansByUserName(firstName, lastName);
+
+        return new ResponseEntity<>(ibans, HttpStatus.OK);
+    }
+
+
 }

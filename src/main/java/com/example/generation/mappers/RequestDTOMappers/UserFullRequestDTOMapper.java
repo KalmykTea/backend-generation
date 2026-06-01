@@ -1,13 +1,13 @@
 package com.example.generation.mappers.RequestDTOMappers;
 
-import com.example.generation.dtos.RequestDTOs.UserRequestDTO;
+import com.example.generation.dtos.RequestDTOs.UserFullRequestDTO;
 import com.example.generation.entities.User;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring", uses = {AddressRequestDTOMapper.class})
-public interface UserRequestDTOMapper {
+public interface UserFullRequestDTOMapper {
     @BeanMapping(ignoreByDefault = true)
     @Mapping(source = "id", target = "id")
     @Mapping(source = "firstName", target = "firstName")
@@ -18,6 +18,5 @@ public interface UserRequestDTOMapper {
     @Mapping(source = "birthdate", target = "birthdate")
     @Mapping(source = "phoneNumber", target = "phoneNumber")
     @Mapping(source = "address", target = "address")
-    User toEntity(UserRequestDTO userRequestDTO);
-    UserRequestDTO toDTO(User user);
+    User toEntity(UserFullRequestDTO userFullRequestDTO);
 }
