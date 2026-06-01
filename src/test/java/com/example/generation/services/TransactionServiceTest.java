@@ -1,0 +1,94 @@
+package com.example.generation.services;
+
+import com.example.generation.domain.policy.TransactionPolicy;
+import com.example.generation.dtos.RequestDTOs.ATMRequestDTO;
+import com.example.generation.dtos.ResponseDTOs.ATMResponseDTO;
+import com.example.generation.entities.Account;
+import com.example.generation.entities.Transaction;
+import com.example.generation.entities.User;
+import com.example.generation.enums.TransactionType;
+import com.example.generation.mappers.ResponseDTOMappers.ATMResponseDTOMapper;
+import com.example.generation.repositories.TransactionRepository;
+import jakarta.persistence.EntityNotFoundException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.math.BigDecimal;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+public class TransactionServiceTest {
+
+    @Mock
+    private TransactionRepository transactionRepository;
+
+    @Mock
+    private AccountService accountService;
+
+    @Mock
+    private TransactionPolicy transactionPolicy;
+
+    @Mock
+    private ATMResponseDTOMapper atmResponseDTOMapper;
+
+    @InjectMocks
+    private TransactionService transactionService;
+
+    private ATMRequestDTO atmRequestDTO;
+    private ATMResponseDTO atmResponseDTO;
+    private Account fromAccount;
+
+    @BeforeEach
+    void setUp() {
+        User user = new User();
+        user.setId(1L);
+        atmRequestDTO = new ATMRequestDTO("NL62INHO0366278277", BigDecimal.valueOf(100), "test transaction", TransactionType.DEPOSIT);
+        atmResponseDTO = new ATMResponseDTO("NL62INHO0366278277", BigDecimal.valueOf(100), "test transaction", TransactionType.DEPOSIT);
+        fromAccount = new Account();
+        fromAccount.setIban("NL62INHO0366278277");
+    }
+
+    @Test
+    void processATMRequest_returnsATMResponseDTO() {
+        when(accountService.getAccountByIbanOrThrow(fromAccount.getIban())).thenReturn(fromAccount);
+        when(transactionRepository.getLast24HoursWithdrawalTotal(eq(fromAccount.getIban()), any()))
+                .thenReturn(BigDecimal.ZERO);
+        when(atmResponseDTOMapper.toDTO(any(Transaction.class)))
+                .thenReturn(atmResponseDTO);
+        doNothing().when(accountService).save(fromAccount);
+
+        ATMResponseDTO result = transactionService.processATMRequest(atmRequestDTO);
+        assertEquals(atmRequestDTO.getAmount(), result.getAmount());
+        assertEquals(atmRequestDTO.getTransactionType(), result.getTransactionType());
+        assertEquals(atmRequestDTO.getDescription(), result.getDescription());
+        assertEquals(atmRequestDTO.getIban(), result.getIban());
+
+        verify(accountService).getAccountByIbanOrThrow(fromAccount.getIban());
+        verify(transactionPolicy).enforceValidATMTransaction(atmRequestDTO, fromAccount);
+        verify(accountService).save(fromAccount);
+        verify(transactionRepository).save(any(Transaction.class));
+
+        InOrder inOrder = Mockito.inOrder(transactionPolicy, accountService, transactionRepository);
+        inOrder.verify(transactionPolicy).enforceValidATMTransaction(atmRequestDTO, fromAccount);
+        inOrder.verify(accountService).save(fromAccount);
+        inOrder.verify(transactionRepository).save(any(Transaction.class));
+    }
+
+    @Test
+    void processATMRequest_throwsEntityNotFoundExceptionWhenAccountNotFound() {
+        when(accountService.getAccountByIbanOrThrow(any()))
+                .thenThrow(EntityNotFoundException.class);
+        assertThrows(EntityNotFoundException.class,
+                () -> transactionService.processATMRequest(atmRequestDTO));
+        verify(transactionPolicy, never()).enforceValidATMTransaction(any(), any());
+    }
+}
