@@ -30,7 +30,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Map;
 
 @Tag(name = "Transactions", description = "Operations for managing transactions")
 @RestController
@@ -153,6 +152,7 @@ public class TransactionController {
     ) {
         requestDTO.setTransactionType(TransactionType.WITHDRAWAL);
         return transactionService.processATMRequest(requestDTO);
+    }
 
     @PostMapping("/deposit")
     @Operation(summary = "Deposit money", description = "Deposit funds into an account via ATM")

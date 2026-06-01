@@ -30,6 +30,7 @@
         <java.version>25</java.version>
         <lombok.version>1.18.40</lombok.version>
         <org.mapstruct.version>1.6.3</org.mapstruct.version>
+        <mockito.version>5.20.0</mockito.version>
     </properties>
     <dependencies>
         <dependency>
@@ -180,7 +181,9 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <argLine>-javaagent:${settings.localRepository}/org/mockito/mockito-core/5.20.0/mockito-core-5.20.0.jar</argLine>
+                    <argLine>
+                        -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar
+                    </argLine>
                 </configuration>
             </plugin>
         </plugins>

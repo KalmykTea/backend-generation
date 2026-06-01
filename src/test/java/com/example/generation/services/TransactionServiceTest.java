@@ -51,15 +51,26 @@ public class TransactionServiceTest {
     void setUp() {
         User user = new User();
         user.setId(1L);
-        atmRequestDTO = new ATMRequestDTO("NL62INHO0366278277", BigDecimal.valueOf(100), "test transaction", TransactionType.DEPOSIT);
-        atmResponseDTO = new ATMResponseDTO("NL62INHO0366278277", BigDecimal.valueOf(100), "test transaction", TransactionType.DEPOSIT);
+        String iban = "NL62INHO036278277";
+        atmRequestDTO = new ATMRequestDTO(
+                iban,
+                BigDecimal.valueOf(100),
+                "test transaction",
+                TransactionType.DEPOSIT);
+        atmResponseDTO = ATMResponseDTO.builder()
+                .iban(iban)
+                .amount(BigDecimal.valueOf(100))
+                .description("test transaction")
+                .transactionType(TransactionType.DEPOSIT)
+                .build();
         fromAccount = new Account();
-        fromAccount.setIban("NL62INHO0366278277");
+        fromAccount.setIban(iban);
     }
 
     @Test
     void processATMRequest_returnsATMResponseDTO() {
-        when(accountService.getAccountByIbanOrThrow(fromAccount.getIban())).thenReturn(fromAccount);
+        when(accountService.getAccountByIbanOrThrow(atmRequestDTO.getIban()))
+                .thenReturn(fromAccount);
         when(transactionRepository.getLast24HoursWithdrawalTotal(eq(fromAccount.getIban()), any()))
                 .thenReturn(BigDecimal.ZERO);
         when(atmResponseDTOMapper.toDTO(any(Transaction.class)))

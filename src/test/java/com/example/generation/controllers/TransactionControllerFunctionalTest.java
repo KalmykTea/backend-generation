@@ -20,6 +20,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
 
+import static org.hamcrest.Matchers.comparesEqualTo;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -59,7 +60,7 @@ public class TransactionControllerFunctionalTest {
         performPostForATMRequest("/transactions/deposit", deposit)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.iban").value(deposit.getIban()))
-                .andExpect(jsonPath("$.amount").value(deposit.getAmount()))
+                .andExpect(jsonPath("$.amount").value(comparesEqualTo(deposit.getAmount()), BigDecimal.class))
                 .andExpect(jsonPath("$.description").value(deposit.getDescription()))
                 .andExpect(jsonPath("$.transactionType").value(deposit.getTransactionType().name()));
     }
@@ -163,7 +164,7 @@ public class TransactionControllerFunctionalTest {
         performPostForATMRequest("/transactions/withdraw", withdrawal)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.iban").value(withdrawal.getIban()))
-                .andExpect(jsonPath("$.amount").value(withdrawal.getAmount()))
+                .andExpect(jsonPath("$.amount").value(comparesEqualTo(withdrawal.getAmount()), BigDecimal.class))
                 .andExpect(jsonPath("$.description").value(withdrawal.getDescription()))
                 .andExpect(jsonPath("$.transactionType").value(withdrawal.getTransactionType().name()));
     }
