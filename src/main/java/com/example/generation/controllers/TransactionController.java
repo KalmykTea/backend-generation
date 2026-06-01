@@ -3,10 +3,10 @@ package com.example.generation.controllers;
 import com.example.generation.dtos.RequestDTOs.ATMRequestDTO;
 import com.example.generation.dtos.RequestDTOs.TransactionRequestDTO;
 import com.example.generation.dtos.RequestDTOs.TransactionFilterRequest;
-import com.example.generation.dtos.RequestDTOs.TransactionRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.ATMResponseDTO;
 import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
 import com.example.generation.entities.Transaction;
+import com.example.generation.enums.TransactionType;
 import com.example.generation.mappers.ResponseDTOMappers.TransactionResponseDTOMapper;
 import com.example.generation.services.TransactionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,7 +15,6 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -25,11 +24,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -104,6 +100,7 @@ public class TransactionController {
             )
             @RequestBody @Valid TransactionRequestDTO transactionRequestDTO
     ) {
+        transactionRequestDTO.setTransactionType(TransactionType.TRANSFER);
         return transactionService.processTransfer(transactionRequestDTO);
     }
 
@@ -154,6 +151,7 @@ public class TransactionController {
             )
             @RequestBody @Valid ATMRequestDTO requestDTO
     ) {
+
         return transactionService.processATMRequest(requestDTO);
     }
 
@@ -204,6 +202,7 @@ public class TransactionController {
             )
             @RequestBody @Valid ATMRequestDTO requestDTO
     ) {
+        requestDTO.setTransactionType(TransactionType.DEPOSIT);
         return transactionService.processATMRequest(requestDTO);
     }
 

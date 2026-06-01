@@ -105,5 +105,36 @@ public class DataSeeder implements ApplicationRunner {
         pending.setUserStatus(UserStatus.PENDING);
         pending.setAddress(customerAddress);
         userRepository.save(pending);
+
+        Address insufficientBalanceAddress = new Address();
+        insufficientBalanceAddress.setAddressLine("Limitstraat 5");
+        insufficientBalanceAddress.setPostalCode("1234AB");
+        insufficientBalanceAddress.setCity("Amsterdam");
+        insufficientBalanceAddress.setCountry("Netherlands");
+        addressRepository.save(insufficientBalanceAddress);
+
+        User insufficientBalanceCustomer = new User();
+        insufficientBalanceCustomer.setFirstName("Insufficient");
+        insufficientBalanceCustomer.setLastName("Balance");
+        insufficientBalanceCustomer.setEmail("insufficient@test.com");
+        insufficientBalanceCustomer.setPassword(passwordEncoder.encode("password123"));
+        insufficientBalanceCustomer.setBsnNumber("111222333");
+        insufficientBalanceCustomer.setBirthdate(LocalDate.of(1998, 3, 10));
+        insufficientBalanceCustomer.setPhoneNumber("0611122233");
+        insufficientBalanceCustomer.setRole(Role.CUSTOMER);
+        insufficientBalanceCustomer.setUserStatus(UserStatus.APPROVED);
+        insufficientBalanceCustomer.setAddress(insufficientBalanceAddress);
+        userRepository.save(insufficientBalanceCustomer);
+
+        List<AccountLimitsRequestDTO> insufficientBalanceLimits = List.of(
+                new AccountLimitsRequestDTO(
+                        null,
+                        AccountType.CHECKING,
+                        BigDecimal.valueOf(-10000),
+                        BigDecimal.valueOf(20000)
+                )
+        );
+
+        accountService.createAccountsForUser(insufficientBalanceCustomer, insufficientBalanceLimits);
     }
 }
