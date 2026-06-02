@@ -1,11 +1,11 @@
 package com.example.generation.controllers;
 
-import com.example.generation.dtos.RequestDTOs.AccountFullRequestDTO;
+import com.example.generation.dtos.RequestDTOs.AccountLimitsRequestDTO;
+import com.example.generation.dtos.ResponseDTOs.AccountClosureResponse;
 import com.example.generation.dtos.ResponseDTOs.AccountFullResponseDTO;
+import com.example.generation.dtos.ResponseDTOs.AccountLimitsResponseDTO;
 import com.example.generation.entities.Account;
-import com.example.generation.framework.annotations.ValidIBAN;
 import com.example.generation.framework.groups.OnUpdate;
-import com.example.generation.mappers.RequestDTOMappers.AccountFullRequestDTOMapper;
 import com.example.generation.mappers.ResponseDTOMappers.AccountFullResponseDTOMapper;
 import com.example.generation.services.AccountService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,27 +18,52 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
+import java.util.Map;
 
 @Tag(name = "Accounts", description = "Operations for managing accounts")
 @RestController
 @RequestMapping("accounts")
 public class AccountController {
     final private AccountService accountService;
-    final private AccountFullRequestDTOMapper accountRequestDTOMapper;
     private final AccountFullResponseDTOMapper accountFullResponseDTOMapper;
 
     public AccountController(
             AccountService accountService,
-            AccountFullRequestDTOMapper accountFullRequestDTOMapper,
-            AccountFullResponseDTOMapper accountFullResponseDTOMapper
-    ) {
+            AccountFullResponseDTOMapper accountFullResponseDTOMapper) {
         this.accountService = accountService;
-        this.accountRequestDTOMapper = accountFullRequestDTOMapper;
         this.accountFullResponseDTOMapper = accountFullResponseDTOMapper;
+    }
+
+    //view all customer accounts
+
+    @GetMapping
+    @PreAuthorize("hasAuthority('EMPLOYEE')")
+    @Operation(summary = "Get paginated list of all customer accounts", description = "Retrieve a paginated list of all customer accounts. Restricted to employees.")
+    public ResponseEntity<Page<AccountFullResponseDTO>> getPaginatedAccounts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<AccountFullResponseDTO> accountPage = accountService.getPaginatedAccounts(pageable);
+
+        return new ResponseEntity<>(accountPage, HttpStatus.OK);
+    }
+
+    //close account
+
+    @PatchMapping("/{iban}/close")
+    @PreAuthorize("hasAuthority('EMPLOYEE')")
+    @Operation(summary = "Close a customer account", description = "Soft deactivates a customer account by setting its status to CLOSED. Restricted to employees.")
+    public ResponseEntity<AccountClosureResponse> closeAccount(@PathVariable String iban) {
+        return ResponseEntity.ok(accountService.closeAccount(iban));
     }
 
     // controller methods based on user stories with swagger doc code go here
@@ -48,7 +73,7 @@ public class AccountController {
             @ApiResponse(
                     responseCode = "200",
                     description = "Account updated successfully",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = AccountFullResponseDTO.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = AccountLimitsResponseDTO.class))
             ),
             @ApiResponse(
                     responseCode = "404",
@@ -58,24 +83,24 @@ public class AccountController {
 
     })
     @PreAuthorize("hasAuthority('EMPLOYEE')")
-    public AccountFullResponseDTO update(
+    public AccountLimitsResponseDTO update(
             @Parameter(description = "IBAN of the account to update")
             @PathVariable String iban,
             @Parameter(description = "Account payload used to update an existing account")
             @Validated({OnUpdate.class})
             @RequestBody
-            AccountFullRequestDTO accountFullRequestDTO
+            AccountLimitsRequestDTO accountLimitsRequestDTO
     ) {
-            return accountService.update(accountFullRequestDTO, iban);
+            return accountService.update(accountLimitsRequestDTO, iban);
     }
 
-    @GetMapping("")
+    @GetMapping("/user")
     @Operation(summary = "Get accounts by user", description = "Returns all accounts belonging to a specific user")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
                     description = "Accounts retrieved successfully",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = AccountFullResponseDTO.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = AccountLimitsResponseDTO.class))
             ),
             @ApiResponse(
                     responseCode = "404",
@@ -109,6 +134,5 @@ public class AccountController {
 
         return new ResponseEntity<>(ibans, HttpStatus.OK);
     }
-
 
 }

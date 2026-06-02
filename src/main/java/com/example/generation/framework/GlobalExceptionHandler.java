@@ -1,12 +1,16 @@
 package com.example.generation.framework;
 
+import com.example.generation.framework.exceptions.AccountAlreadyClosedException;
+import com.example.generation.framework.exceptions.AccountBalanceNotEmptyException;
 import com.example.generation.framework.exceptions.DailyLimitReachedException;
+import com.example.generation.framework.exceptions.EntityAlreadyExistsException;
 import com.example.generation.framework.exceptions.InsufficientBalanceException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -18,15 +22,6 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
-        String name = ex.getName();
-        String type = ex.getRequiredType().getSimpleName();
-        return new ResponseEntity<>(new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(), name + " should be of type " + type , List.of()
-        ),  HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationError(MethodArgumentNotValidException ex) {
         List<Map<String, String>> fieldErrors = ex.getBindingResult().getFieldErrors()
@@ -35,8 +30,8 @@ public class GlobalExceptionHandler {
                 .toList();
 
         return new ResponseEntity<>(new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(), "Validation Failed", fieldErrors
-        ),  HttpStatus.INTERNAL_SERVER_ERROR);
+                HttpStatus.BAD_REQUEST.value(), "Validation Failed", fieldErrors
+        ),  HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -47,8 +42,15 @@ public class GlobalExceptionHandler {
                 .toList();
 
         return new ResponseEntity<>(new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage(), fieldErrors
-        ),  HttpStatus.INTERNAL_SERVER_ERROR);
+                HttpStatus.BAD_REQUEST.value(), ex.getMessage(), fieldErrors
+        ),  HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(EntityAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleEntityAlreadyExists(EntityAlreadyExistsException ex) {
+        return new ResponseEntity<>(new ErrorResponse(
+                HttpStatus.CONFLICT.value(), "Entity Already Exists", List.of(Map.of("field", ex.getField(), "message", ex.getMessage()))
+        ), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(InsufficientBalanceException.class)
@@ -79,12 +81,24 @@ public class GlobalExceptionHandler {
         ),   HttpStatus.FORBIDDEN);
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
-        ex.printStackTrace();
+    @ExceptionHandler(UsernameNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleUsernameNotFound(UsernameNotFoundException ex) {
         return new ResponseEntity<>(new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(), "Unexpected Server Error", List.of()
-        ),  HttpStatus.BAD_REQUEST);
+                HttpStatus.UNAUTHORIZED.value(), ex.getMessage(), List.of()
+        ),   HttpStatus.UNAUTHORIZED);
+    }
+    @ExceptionHandler(AccountAlreadyClosedException.class)
+    public ResponseEntity<ErrorResponse> handleAccountAlreadyClosed(AccountAlreadyClosedException ex) {
+        return new ResponseEntity<>(new ErrorResponse(
+                HttpStatus.CONFLICT.value(), ex.getMessage(), List.of()
+        ), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(AccountBalanceNotEmptyException.class)
+    public ResponseEntity<ErrorResponse> handleAccountBalanceNotEmpty(AccountBalanceNotEmptyException ex) {
+        return new ResponseEntity<>(new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(), ex.getMessage(), List.of()
+        ), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -92,5 +106,13 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(), ex.getMessage(), List.of()
         ),  HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
+        ex.printStackTrace();
+        return new ResponseEntity<>(new ErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(), "Unexpected Server Error", List.of()
+        ),  HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

@@ -1,28 +1,22 @@
 package com.example.generation.dtos.RequestDTOs;
 
 import com.example.generation.enums.TransactionType;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.validation.constraints.*;
+import com.example.generation.framework.annotations.ValidIBAN;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
 
 @Getter
 @Setter
-public class ATMRequestDTO {
-    @NotBlank
+@NoArgsConstructor
+public class ATMRequestDTO extends BaseTransactionRequestDTO {
+    @ValidIBAN
     private String iban;
 
-    @NotNull
-    @Positive
-    @Digits(integer = 12, fraction = 2)
-    private BigDecimal amount;
-
-    @Size(max = 140)
-    private String description;
-
-    @NotNull
-    private TransactionType transactionType;
+    public ATMRequestDTO(String iban, BigDecimal amount, String description, TransactionType transactionType) {
+        super(null, amount, description, transactionType);
+        this.iban = iban;
+    }
 }

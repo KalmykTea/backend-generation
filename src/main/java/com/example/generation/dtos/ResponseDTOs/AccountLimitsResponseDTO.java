@@ -4,10 +4,13 @@ import com.example.generation.enums.AccountType;
 import lombok.Builder;
 import lombok.Value;
 
+import java.math.BigDecimal;
+
 @Value
 @Builder
-public class AccountTransactionResponseDTO {
+public class AccountLimitsResponseDTO {
     String iban;
-    long userId;
     AccountType accountType;
+    BigDecimal absoluteLimit;
+    BigDecimal dailyLimit;
 }

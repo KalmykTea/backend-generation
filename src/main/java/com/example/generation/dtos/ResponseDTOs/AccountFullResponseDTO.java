@@ -10,10 +10,8 @@ import java.math.BigDecimal;
 @Builder
 public class AccountFullResponseDTO {
     String iban;
-    long userId;
     AccountType accountType;
     BigDecimal balance;
     BigDecimal absoluteLimit;
     BigDecimal dailyLimit;
-    BigDecimal dailyTransfer;
 }

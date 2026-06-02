@@ -1,11 +1,14 @@
 package com.example.generation.services;
 
+import com.example.generation.dtos.RequestDTOs.AccountLimitsRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.UserResponseDTO;
 import com.example.generation.entities.User;
 import com.example.generation.enums.UserStatus;
+import com.example.generation.framework.exceptions.EntityAlreadyExistsException;
 import com.example.generation.mappers.ResponseDTOMappers.UserResponseDTOMapper;
 import com.example.generation.repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -32,31 +35,23 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException{
-        return userRepository.findUserByEmail(email).orElseThrow(() -> new UsernameNotFoundException(email));
+        return userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException(email));
     }
 
-    // basic stuff, input custom logic according to your user stories
-    public Iterable<User> findAll(){
-        return userRepository.findAll();
-    }
+    @Transactional
+    public User register(User user) {
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new EntityAlreadyExistsException("email", "Email already exists");
+        }
+        if (userRepository.existsByBsnNumber(user.getBsnNumber())) {
+            throw new EntityAlreadyExistsException("bsnNumber", "BSN already exists");
+        }
 
-    public Optional<User> findById(long id){
-        return userRepository.findById(id);
-    }
-
-    public User save(User user){
         return userRepository.save(user);
     }
 
-    public User update(User user){
-        return userRepository.save(user);
-    }
-
-    public void deleteById(long id){
-        userRepository.deleteById(id);
-    }
-
-    public UserResponseDTO approveUser(Long id) {
+    @Transactional
+    public UserResponseDTO approveUser(Long id, List<AccountLimitsRequestDTO> accountLimitsRequestDTOS) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
@@ -68,7 +63,7 @@ public class UserService implements UserDetailsService {
         // change status to Approved, save, create accounts
         user.setUserStatus(UserStatus.APPROVED);
         User savedUser = userRepository.save(user);
-        accountService.createAccountsForUser(user);
+        accountService.createAccountsForUser(user, accountLimitsRequestDTOS);
 
         return userResponseDTOMapper.toDTO(savedUser);
     }
