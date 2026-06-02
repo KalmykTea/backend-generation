@@ -14,5 +14,4 @@ public interface AccountRepository extends JpaRepository<Account, String> {
     List<Account> findByUserId(Long userId);
 
     boolean existsByIbanAndUserId(String iban, Long userId);
-    List<Account> findByUser_Email(String email);
 }

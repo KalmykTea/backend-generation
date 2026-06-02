@@ -26,9 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import java.time.LocalDateTime;
 
 @Service
@@ -36,7 +34,6 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final AccountRepository accountRepository;
     private final EntityManager entityManager;
-    private final UserRepository userRepository;
     private final AccountService accountService;
     private final TransactionResponseDTOMapper transactionResponseDTOMapper;
     private final ATMResponseDTOMapper atmResponseDTOMapper;
@@ -52,7 +49,6 @@ public class TransactionService {
                               TransactionPolicy transactionPolicy) {
         this.transactionRepository = transactionRepository;
         this.accountRepository = accountRepository;
-        this.userRepository = userRepository;
         this.entityManager = entityManager;
         this.accountService = accountService;
         this.transactionResponseDTOMapper = transactionResponseDTOMapper;

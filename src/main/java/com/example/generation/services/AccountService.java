@@ -138,10 +138,6 @@ public class AccountService {
         return iban;
     }
 
-    public void deleteById(String id) {
-        accountRepository.deleteById(id);
-    }
-
     public Page<AccountFullResponseDTO> getPaginatedAccounts(Pageable pageable) {
         return accountRepository.findAll(pageable)
                 .map(this.accountFullResponseDTOMapper::toDTO);
@@ -160,7 +156,7 @@ public class AccountService {
 
         account.setAccountStatus(AccountStatus.CLOSED);
         accountRepository.save(account);
-//Use maybe mapper???
+
         return new AccountClosureResponse(
                 account.getIban(),
                 account.getAccountStatus(),

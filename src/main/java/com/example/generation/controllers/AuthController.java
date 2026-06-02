@@ -3,7 +3,6 @@ package com.example.generation.controllers;
 import com.example.generation.dtos.RequestDTOs.LoginRequestDTO;
 import com.example.generation.dtos.RequestDTOs.UserFullRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.UserResponseDTO;
-import com.example.generation.entities.Account;
 import com.example.generation.entities.User;
 import com.example.generation.framework.groups.OnCreate;
 import com.example.generation.mappers.RequestDTOMappers.UserFullRequestDTOMapper;

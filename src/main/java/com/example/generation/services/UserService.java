@@ -50,27 +50,6 @@ public class UserService implements UserDetailsService {
         return userRepository.save(user);
     }
 
-    // basic stuff, input custom logic according to your user stories
-    public Iterable<User> findAll(){
-        return userRepository.findAll();
-    }
-
-    public Optional<User> findById(long id){
-        return userRepository.findById(id);
-    }
-
-    public User save(User user){
-        return userRepository.save(user);
-    }
-
-    public User update(User user){
-        return userRepository.save(user);
-    }
-
-    public void deleteById(long id){
-        userRepository.deleteById(id);
-    }
-
     @Transactional
     public UserResponseDTO approveUser(Long id, List<AccountLimitsRequestDTO> accountLimitsRequestDTOS) {
         User user = userRepository.findById(id)
