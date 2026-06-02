@@ -51,4 +51,12 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
         return authentication.getAuthorities().stream()
                 .anyMatch(a -> Objects.equals(a.getAuthority(), "CUSTOMER"));
     }
+
+    public boolean isOwner(Authentication authentication, Long userId) {
+        User currentUser = getAuthenticatedUser(authentication);
+        if (isCustomer(authentication)) {
+            return currentUser.getId().equals(userId);
+        }
+        return true; //because employees can access anything
+    }
 }

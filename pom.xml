@@ -150,9 +150,6 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
                 <configuration>
-                    <compilerArgs>
-                        --enable-preview
-                    </compilerArgs>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
@@ -174,5 +171,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
