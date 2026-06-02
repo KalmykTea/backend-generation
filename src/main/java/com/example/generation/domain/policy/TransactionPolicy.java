@@ -3,11 +3,14 @@ package com.example.generation.domain.policy;
 import com.example.generation.dtos.RequestDTOs.ATMRequestDTO;
 import com.example.generation.entities.Account;
 
+import com.example.generation.entities.User;
 import com.example.generation.enums.AccountStatus;
 import com.example.generation.enums.AccountType;
+import com.example.generation.enums.Role;
 import com.example.generation.enums.TransactionType;
 import com.example.generation.framework.exceptions.DailyLimitReachedException;
 import com.example.generation.framework.exceptions.InsufficientBalanceException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -19,8 +22,11 @@ public class TransactionPolicy {
         enforceTransactionMustBeTypeTransfer(transactionType);
         enforceAccountMustBeActive(fromAccount, "fromAccount");
         enforceAccountMustBeActive(toAccount, "toAccount");
-        enforceAccountsMustBelongToDifferentUsers(fromAccount, toAccount);
-        enforceAccountsMustBeTypeChecking(fromAccount, toAccount);
+
+        boolean differentUsers = !fromAccount.getUser().getId().equals(toAccount.getUser().getId());
+        if (differentUsers) {
+            enforceAccountsMustBeTypeChecking(fromAccount, toAccount);
+        }
     }
 
     public void enforceValidATMTransaction(ATMRequestDTO dto, Account account) {
@@ -70,6 +76,13 @@ public class TransactionPolicy {
         if (type == TransactionType.DEPOSIT) return;
         if(currentTransferTotal.compareTo(dailyLimit) > 0){
             throw new DailyLimitReachedException();
+        }
+    }
+
+    public void enforceCustomerOwnsFromAccount(User currentUser, Account fromAccount) {
+        if (currentUser.getRole() == Role.CUSTOMER &&
+                !fromAccount.getUser().getId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("You can only transfer from your own account");
         }
     }
 

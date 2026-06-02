@@ -1,6 +1,7 @@
 package com.example.generation.controllers;
 
 import com.example.generation.dtos.RequestDTOs.ATMRequestDTO;
+import com.example.generation.dtos.RequestDTOs.TransactionRequestDTO;
 import com.example.generation.entities.Account;
 import com.example.generation.enums.AccountType;
 import com.example.generation.enums.TransactionType;
@@ -24,6 +25,7 @@ import static org.hamcrest.Matchers.comparesEqualTo;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -183,6 +185,55 @@ public class TransactionControllerFunctionalTest {
                 .andExpect(status().isForbidden());
     }
 
+    @Test
+    @WithUserDetails(value = "employee@test.com")
+    void getTransactionsByUserId_employeeToken_returns200() throws Exception {
+        Account customerAccount = getAccountByEmailAndType("customer@test.com", AccountType.CHECKING);
+        Long customerId = customerAccount.getUser().getId();
+
+        mockMvc.perform(get("/transactions/user")
+                        .param("userId", customerId.toString()))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithUserDetails(value = "customer@test.com")
+    void getTransactionsByUserId_customerToken_returns403() throws Exception {
+        mockMvc.perform(get("/transactions/user")
+                        .param("userId", "1"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithUserDetails(value = "customer@test.com")
+    void transfer_betweenOwnAccounts_returns200() throws Exception {
+        Account fromAccount = getAccountByEmailAndType("customer@test.com", AccountType.CHECKING);
+        Account toAccount = getAccountByEmailAndType("insufficient@test.com", AccountType.CHECKING);
+
+        performPostForTransferRequest(fromAccount.getIban(), toAccount.getIban(), BigDecimal.valueOf(10.00))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithUserDetails(value = "customer@test.com")
+    void transfer_fromOtherCustomerAccount_returns403() throws Exception {
+        Account otherAccount = getAccountByEmailAndType("insufficient@test.com", AccountType.CHECKING);
+        Account myAccount = getAccountByEmailAndType("customer@test.com", AccountType.CHECKING);
+
+        performPostForTransferRequest(otherAccount.getIban(), myAccount.getIban(), BigDecimal.valueOf(10.00))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithUserDetails(value = "customer@test.com")
+    void transfer_negativeAmount_returns400() throws Exception {
+        Account fromAccount = getAccountByEmailAndType("customer@test.com", AccountType.CHECKING);
+        Account toAccount = getAccountByEmailAndType("insufficient@test.com", AccountType.CHECKING);
+
+        performPostForTransferRequest(fromAccount.getIban(), toAccount.getIban(), BigDecimal.valueOf(-10.00))
+                .andExpect(status().isBadRequest());
+    }
+
     private Account getAccountByEmailAndType(String email, AccountType accountType) {
         for (Account a : accountRepository.findAll()) {
             if (a.getUser().getEmail().equals(email)
@@ -213,4 +264,19 @@ public class TransactionControllerFunctionalTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)));
     }
+
+    private ResultActions performPostForTransferRequest(String fromIban, String toIban, BigDecimal amount) throws Exception {
+        TransactionRequestDTO dto = new TransactionRequestDTO();
+        dto.setFromAccountIban(fromIban);
+        dto.setToAccountIban(toIban);
+        dto.setAmount(amount);
+        dto.setDescription("test transfer");
+        dto.setTransactionType(TransactionType.TRANSFER);
+
+        return mockMvc.perform(post("/transactions/transfer")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)));
+    }
+
+
 }
