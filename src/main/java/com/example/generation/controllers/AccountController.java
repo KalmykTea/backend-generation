@@ -108,7 +108,6 @@ public class AccountController {
                     content = @Content
             )
     })
-    @PreAuthorize("@permissionEvaluator.isOwner(authentication, #userId)")
     public List<AccountFullResponseDTO> getAccountsByUserId(
             @RequestParam Long userId
     ) {
