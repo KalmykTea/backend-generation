@@ -27,14 +27,18 @@ public class AccountControllerTest {
     @Autowired
     private AccountRepository accountRepository;
 
+
+    //////handle authorization because the end point should not be public
+    ///////conect the token with this
+    //////at least call the method that you need to get the token
+    ///
+    /// ///with user details solves de problem, i just be good to have aunothirized users in it
+
     @Test
     @WithUserDetails(value = "customer@test.com")
     void getAccountsByUserId_customerSeesOwnAccounts_returns200() throws Exception {
         Account account = getAccountByEmailAndType("customer@test.com", AccountType.CHECKING);
         Long userId = account.getUser().getId();
-
-        System.out.println("USER ID: " + userId);
-        System.out.println("USER EMAIL: " + account.getUser().getEmail());
 
         mockMvc.perform(get("/accounts/user")
                         .param("userId", userId.toString()))

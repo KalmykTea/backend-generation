@@ -39,6 +39,10 @@ public class AuthControllerTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    ///
+    ////////////call service method directly have a set up where i create the user i wil login with
+    ///
+
     @Test
     void me_withValidToken_returns200() throws Exception {
         //get the token and then call the endpoint

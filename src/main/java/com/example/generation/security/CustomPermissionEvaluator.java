@@ -62,6 +62,7 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
 
     public boolean isOwner(Authentication authentication, Long userId) {
         User currentUser = getAuthenticatedUser(authentication);
+
         if (isCustomer(authentication)) {
             return currentUser.getId().equals(userId);
         }
