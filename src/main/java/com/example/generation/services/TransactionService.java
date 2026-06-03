@@ -70,10 +70,7 @@ public class TransactionService {
         Account fromAccount = accountService.getAccountByIbanOrThrow(dto.getFromAccountIban());
         Account toAccount = accountService.getAccountByIbanOrThrow(dto.getToAccountIban());
 
-        if (currentUser.getRole() == Role.CUSTOMER && !fromAccount.getUser().getId().equals(currentUser.getId())) {
-            throw new AccessDeniedException("You can only transfer from your own account");
-        }
-
+        transactionPolicy.enforceCustomerOwnsFromAccount(currentUser, fromAccount);
         transactionPolicy.enforceValidTransfer(fromAccount, toAccount, dto.getTransactionType());
         this.transact(fromAccount, dto.getAmount(), TransactionType.TRANSFER);
         this.transact(toAccount, dto.getAmount(), TransactionType.DEPOSIT);
