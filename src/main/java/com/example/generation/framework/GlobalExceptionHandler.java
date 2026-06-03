@@ -115,4 +115,11 @@ public class GlobalExceptionHandler {
                 HttpStatus.INTERNAL_SERVER_ERROR.value(), "Unexpected Server Error", List.of()
         ),  HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(org.springframework.security.access.AccessDeniedException ex) {
+        return new ResponseEntity<>(new ErrorResponse(
+                HttpStatus.FORBIDDEN.value(), ex.getMessage(), List.of()
+        ), HttpStatus.FORBIDDEN);
+    }
 }
