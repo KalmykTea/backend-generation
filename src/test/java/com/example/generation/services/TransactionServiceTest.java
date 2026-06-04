@@ -68,7 +68,7 @@ public class TransactionServiceTest {
     }
 
     @Test
-    void processATMRequest_returnsATMResponseDTO() {
+    void processATMRequest_executesStepsInCorrectOrder() {
         when(accountService.getAccountByIbanOrThrow(atmRequestDTO.getIban()))
                 .thenReturn(fromAccount);
         when(transactionRepository.getLast24HoursWithdrawalTotal(eq(fromAccount.getIban()), any()))
