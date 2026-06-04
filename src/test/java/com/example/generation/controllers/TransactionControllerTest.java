@@ -43,12 +43,14 @@ public class TransactionControllerTest {
     private AccountRepository accountRepository;
 
     private Account account;
+    private Account otherAccount;
     private ATMRequestDTO deposit;
     private ATMRequestDTO withdrawal;
 
     @BeforeEach
     void setUp() {
         account = getAccountByEmailAndType("customer@test.com", AccountType.SAVINGS);
+        otherAccount = getAccountByEmailAndType("employee@test.com", AccountType.SAVINGS);
         deposit = createATMRequest(
                 account,
                 BigDecimal.valueOf(100),
@@ -158,7 +160,7 @@ public class TransactionControllerTest {
     @Test
     @WithUserDetails(value = "customer@test.com")
     void withdrawal_returnsForbiddenWhenUserDoesNotOwnAccount() throws Exception {
-        withdrawal.setIban("NL00INHO0000000");
+        withdrawal.setIban(otherAccount.getIban());
         performPostForATMRequest("/transactions/withdraw", withdrawal)
                 .andExpect(status().isForbidden());
     }
