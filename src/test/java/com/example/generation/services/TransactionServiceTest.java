@@ -93,5 +93,5 @@ public class TransactionServiceTest {
         verify(transactionPolicy, never()).enforceValidATMTransaction(any(), any());
     }
 
-    // if policies are failed verify repositories aren't called
+    // TODO: Add a test asserting repositories are not called when transactionPolicy validation fails.
 }
