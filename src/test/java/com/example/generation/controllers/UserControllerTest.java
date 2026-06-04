@@ -45,8 +45,8 @@ public class UserControllerTest {
 
     @BeforeEach
     void setUp() {
-        Optional<User> user = userRepository.findByEmail("pending@test.com");
-        user.ifPresent(value -> pending = value);
+        pending = userRepository.findByEmail("pending@test.com")
+                .orElseThrow(() -> new IllegalStateException("Test fixture missing user pending@test.com"));
 
         validLimitDTOs = List.of(
                 new AccountLimitsRequestDTO(

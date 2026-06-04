@@ -2,6 +2,7 @@ package com.example.generation.services;
 
 import com.example.generation.domain.policy.AccountPolicy;
 import com.example.generation.dtos.RequestDTOs.AccountLimitsRequestDTO;
+import com.example.generation.dtos.ResponseDTOs.AccountLimitsResponseDTO;
 import com.example.generation.entities.Account;
 import com.example.generation.entities.User;
 import com.example.generation.enums.AccountType;
@@ -97,7 +98,8 @@ public class AccountServiceTest {
     void update_DoesNotUpdateAccountWhenLimitsAreNull() {
         when(accountRepository.findByIban(iban)).thenReturn(Optional.of(account));
         when(accountRepository.save(account)).thenReturn(account);
-        when(accountLimitsResponseDTOMapper.toDTO(account)).thenReturn(any());
+        when(accountLimitsResponseDTOMapper.toDTO(any(Account.class)))
+                .thenReturn(mock(AccountLimitsResponseDTO.class));
         checkingDTO.setDailyLimit(null);
         checkingDTO.setAbsoluteLimit(null);
         BigDecimal originalDailyLimit = account.getDailyLimit();
