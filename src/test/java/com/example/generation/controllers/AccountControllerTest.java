@@ -41,8 +41,6 @@ public class AccountControllerTest {
     Account existingCheckingAccount;
     AccountLimitsRequestDTO validLimitsRequestDTO;
     AccountLimitsRequestDTO invalidLimitsRequestDTO;
-    List<AccountLimitsRequestDTO> validLimitDTOs;
-    List<AccountLimitsRequestDTO> invalidLimitDTOs;
 
     @BeforeEach
     void setup()
@@ -54,34 +52,6 @@ public class AccountControllerTest {
         invalidLimitsRequestDTO = new AccountLimitsRequestDTO(
                 existingCheckingAccount.getIban(), AccountType.CHECKING,
                 BigDecimal.valueOf(-1000), BigDecimal.valueOf(-1000)
-        );
-        validLimitDTOs = List.of(
-                new AccountLimitsRequestDTO(
-                        null,
-                        AccountType.CHECKING,
-                        BigDecimal.valueOf(-100),
-                        BigDecimal.valueOf(100)
-                ),
-                new AccountLimitsRequestDTO(
-                        null,
-                        AccountType.SAVINGS,
-                        BigDecimal.valueOf(-500),
-                        BigDecimal.valueOf(100)
-                )
-        );
-        invalidLimitDTOs = List.of(
-                new AccountLimitsRequestDTO(
-                        null,
-                        AccountType.CHECKING,
-                        BigDecimal.valueOf(100),
-                        BigDecimal.valueOf(-100)
-                ),
-                new AccountLimitsRequestDTO(
-                        null,
-                        AccountType.CHECKING,
-                        BigDecimal.valueOf(500),
-                        BigDecimal.valueOf(-100)
-                )
         );
     }
 
