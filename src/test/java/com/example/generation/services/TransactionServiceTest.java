@@ -70,12 +70,13 @@ public class TransactionServiceTest {
 
     @Test
     void processATMRequest_executesStepsInCorrectOrder() {
+        LocalDate today = LocalDate.now();
         when(accountService.getAccountByIbanOrThrow(atmRequestDTO.getIban()))
                 .thenReturn(fromAccount);
         when(transactionRepository.getWithdrawalTotalWithinDurationByIban(
                 eq(fromAccount.getIban()),
-                eq(LocalDate.now().atStartOfDay()),
-                eq(LocalDate.now().atTime(LocalTime.MAX))))
+                eq(today.atStartOfDay()),
+                eq(today.atTime(LocalTime.MAX))))
                 .thenReturn(BigDecimal.ZERO);
         when(atmResponseDTOMapper.toDTO(any(Transaction.class)))
                 .thenReturn(atmResponseDTO);
@@ -83,8 +84,8 @@ public class TransactionServiceTest {
         verify(accountService).getAccountByIbanOrThrow(fromAccount.getIban());
         verify(transactionRepository).getWithdrawalTotalWithinDurationByIban(
                 eq(fromAccount.getIban()),
-                eq(LocalDate.now().atStartOfDay()),
-                eq(LocalDate.now().atTime(LocalTime.MAX)));
+                eq(today.atStartOfDay()),
+                eq(today.atTime(LocalTime.MAX)));
         InOrder inOrder = Mockito.inOrder(transactionPolicy, accountService, transactionRepository);
         inOrder.verify(transactionPolicy).enforceValidATMTransaction(atmRequestDTO, fromAccount);
         inOrder.verify(accountService).save(fromAccount);
@@ -99,7 +100,7 @@ public class TransactionServiceTest {
                 () -> transactionService.processATMRequest(atmRequestDTO));
         verify(transactionPolicy, never()).enforceValidATMTransaction(any(), any());
     }
-    
+
     @Test
     void processATMRequest_throwsAndPreventsPersist(){
         when(accountService.getAccountByIbanOrThrow(any())).thenReturn(fromAccount);

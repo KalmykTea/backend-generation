@@ -115,8 +115,9 @@ public class TransactionService {
     }
 
     private void transact(Account account, BigDecimal amount, TransactionType transactionType) {
+        LocalDate today = LocalDate.now();
         BigDecimal currentWithdrawalTotal = transactionRepository.getWithdrawalTotalWithinDurationByIban(
-                account.getIban(), LocalDate.now().atStartOfDay(), LocalDate.now().atTime(LocalTime.MAX));
+                account.getIban(), today.atStartOfDay(), today.atTime(LocalTime.MAX));
         BigDecimal newBalance = transactionType == TransactionType.DEPOSIT
                 ? account.getBalance().add(amount)
                 : account.getBalance().subtract(amount);
