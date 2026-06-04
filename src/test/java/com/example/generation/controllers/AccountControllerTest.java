@@ -111,7 +111,7 @@ public class AccountControllerTest {
 
     @Test
     @WithUserDetails(value = "customer@test.com")
-    void update_returnsForbiddenWhenUnauthenticated() throws Exception {
+    void update_update_returnsForbiddenWhenUnauthorized() throws Exception {
         mockMvc.perform(patch("/accounts/" + validLimitsRequestDTO.getIban())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validLimitsRequestDTO)))
