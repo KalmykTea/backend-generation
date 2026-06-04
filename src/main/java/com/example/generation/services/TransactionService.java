@@ -9,7 +9,6 @@ import com.example.generation.entities.Account;
 import com.example.generation.dtos.RequestDTOs.TransactionFilterRequest;
 import com.example.generation.entities.Transaction;
 import com.example.generation.entities.User;
-import com.example.generation.enums.Role;
 import com.example.generation.enums.TransactionType;
 import com.example.generation.mappers.ResponseDTOMappers.ATMResponseDTOMapper;
 import com.example.generation.mappers.ResponseDTOMappers.TransactionResponseDTOMapper;
@@ -17,7 +16,6 @@ import com.example.generation.repositories.AccountRepository;
 import com.example.generation.repositories.TransactionRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import com.example.generation.repositories.UserRepository;
 import jakarta.persistence.EntityManager;
@@ -103,7 +101,6 @@ public class TransactionService {
         return transaction;
     }
 
-    //use functional programming later to merge the two build transactions... not sure how to do that yet
     private Transaction buildTransaction(Account account, ATMRequestDTO dto) {
         Transaction transaction = new Transaction();
         transaction.setFromAccount(account);

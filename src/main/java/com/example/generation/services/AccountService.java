@@ -62,14 +62,6 @@ public class AccountService {
         return accountLimitsResponseDTOMapper.toDTO(accountRepository.save(existing));
     }
 
-    public Account findById(String id) {
-        Optional<Account> account = accountRepository.findById(id);
-        if (account.isPresent()) {
-            return account.get();
-        }
-        else throw new EntityNotFoundException("Account with id: " + id + " not found");
-    }
-
     public void save(Account account) {
         accountRepository.save(account);
     }
@@ -80,9 +72,7 @@ public class AccountService {
     }
 
     public AccountFullResponseDTO getAccountByIban(String iban) {
-        Account account = accountRepository.findByIban(iban)
-                .orElseThrow(() -> new EntityNotFoundException("Account not found"));
-
+        Account account = this.getAccountByIbanOrThrow(iban);
         return accountFullResponseDTOMapper.toDTO(account);
     }
 
@@ -95,6 +85,7 @@ public class AccountService {
     }
 
     public void createAccountsForUser(User user, List<AccountLimitsRequestDTO> accountLimitsRequestDTOs) {
+        accountPolicy.enforceDistinctAccountTypes(accountLimitsRequestDTOs);
         Map<AccountType, Account> accountMap = Map.of(
                 AccountType.CHECKING, createAccount(user, AccountType.CHECKING),
                 AccountType.SAVINGS, createAccount(user, AccountType.SAVINGS)
@@ -156,7 +147,6 @@ public class AccountService {
 
         account.setAccountStatus(AccountStatus.CLOSED);
         accountRepository.save(account);
-
         return new AccountClosureResponse(
                 account.getIban(),
                 account.getAccountStatus(),
