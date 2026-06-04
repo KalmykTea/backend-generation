@@ -24,6 +24,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.time.LocalDateTime;
 
@@ -113,7 +115,9 @@ public class TransactionService {
     }
 
     private void transact(Account account, BigDecimal amount, TransactionType transactionType) {
-        BigDecimal currentWithdrawalTotal = transactionRepository.getLast24HoursWithdrawalTotal(account.getIban(), LocalDateTime.now().minusHours(24));
+        LocalDate today = LocalDate.now();
+        BigDecimal currentWithdrawalTotal = transactionRepository.getWithdrawalTotalWithinDurationByIban(
+                account.getIban(), today.atStartOfDay(), today.atTime(LocalTime.MAX));
         BigDecimal newBalance = transactionType == TransactionType.DEPOSIT
                 ? account.getBalance().add(amount)
                 : account.getBalance().subtract(amount);

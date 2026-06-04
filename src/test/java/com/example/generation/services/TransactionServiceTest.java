@@ -20,8 +20,9 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
@@ -69,15 +70,22 @@ public class TransactionServiceTest {
 
     @Test
     void processATMRequest_executesStepsInCorrectOrder() {
+        LocalDate today = LocalDate.now();
         when(accountService.getAccountByIbanOrThrow(atmRequestDTO.getIban()))
                 .thenReturn(fromAccount);
-        when(transactionRepository.getLast24HoursWithdrawalTotal(eq(fromAccount.getIban()), any()))
+        when(transactionRepository.getWithdrawalTotalWithinDurationByIban(
+                eq(fromAccount.getIban()),
+                eq(today.atStartOfDay()),
+                eq(today.atTime(LocalTime.MAX))))
                 .thenReturn(BigDecimal.ZERO);
         when(atmResponseDTOMapper.toDTO(any(Transaction.class)))
                 .thenReturn(atmResponseDTO);
         transactionService.processATMRequest(atmRequestDTO);
         verify(accountService).getAccountByIbanOrThrow(fromAccount.getIban());
-        verify(transactionRepository).getLast24HoursWithdrawalTotal(eq(fromAccount.getIban()), any());
+        verify(transactionRepository).getWithdrawalTotalWithinDurationByIban(
+                eq(fromAccount.getIban()),
+                eq(today.atStartOfDay()),
+                eq(today.atTime(LocalTime.MAX)));
         InOrder inOrder = Mockito.inOrder(transactionPolicy, accountService, transactionRepository);
         inOrder.verify(transactionPolicy).enforceValidATMTransaction(atmRequestDTO, fromAccount);
         inOrder.verify(accountService).save(fromAccount);
@@ -93,5 +101,12 @@ public class TransactionServiceTest {
         verify(transactionPolicy, never()).enforceValidATMTransaction(any(), any());
     }
 
-    // TODO: Add a test asserting repositories are not called when transactionPolicy validation fails.
+    @Test
+    void processATMRequest_throwsAndPreventsPersist(){
+        when(accountService.getAccountByIbanOrThrow(any())).thenReturn(fromAccount);
+        doThrow(IllegalArgumentException.class).when(transactionPolicy).enforceValidATMTransaction(any(), any());
+        assertThrows(IllegalArgumentException.class,
+                () -> transactionService.processATMRequest(atmRequestDTO));
+        verify(transactionRepository, never()).save(any());
+    }
 }

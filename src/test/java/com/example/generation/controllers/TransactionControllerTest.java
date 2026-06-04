@@ -22,6 +22,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 
 import static org.hamcrest.Matchers.comparesEqualTo;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -68,15 +69,16 @@ public class TransactionControllerTest {
     @Test
     @WithUserDetails(value = "customer@test.com")
     void deposit_persistsAndReturnsATMTransaction() throws Exception {
+        BigDecimal balanceBefore = account.getBalance();
         performPostForATMRequest("/transactions/deposit", deposit)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.iban").value(deposit.getIban()))
                 .andExpect(jsonPath("$.amount").value(comparesEqualTo(deposit.getAmount()), BigDecimal.class))
                 .andExpect(jsonPath("$.description").value(deposit.getDescription()))
                 .andExpect(jsonPath("$.transactionType").value(deposit.getTransactionType().name()));
+        BigDecimal balanceAfter = accountRepository.getAccountBalanceByIban(deposit.getIban());
+        assertTrue(balanceAfter.compareTo(balanceBefore.add(deposit.getAmount())) == 0);
     }
-
-    // make a request for that account to make sure the balance is correct
 
     @Test
     @WithUserDetails(value = "customer@test.com")
@@ -149,12 +151,15 @@ public class TransactionControllerTest {
     @Test
     @WithUserDetails(value = "customer@test.com")
     void withdrawal_persistsAndReturnsATMTransaction() throws Exception {
+        BigDecimal balanceBefore = account.getBalance();
         performPostForATMRequest("/transactions/withdraw", withdrawal)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.iban").value(withdrawal.getIban()))
                 .andExpect(jsonPath("$.amount").value(comparesEqualTo(withdrawal.getAmount()), BigDecimal.class))
                 .andExpect(jsonPath("$.description").value(withdrawal.getDescription()))
                 .andExpect(jsonPath("$.transactionType").value(withdrawal.getTransactionType().name()));
+        BigDecimal balanceAfter = accountRepository.getAccountBalanceByIban(withdrawal.getIban());
+        assertTrue(balanceAfter.compareTo(balanceBefore.subtract(withdrawal.getAmount())) == 0);
     }
 
     @Test
