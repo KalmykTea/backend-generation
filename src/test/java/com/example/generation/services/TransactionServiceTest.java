@@ -99,6 +99,13 @@ public class TransactionServiceTest {
                 () -> transactionService.processATMRequest(atmRequestDTO));
         verify(transactionPolicy, never()).enforceValidATMTransaction(any(), any());
     }
-
-    // TODO: Add a test asserting repositories are not called when transactionPolicy validation fails.
+    
+    @Test
+    void processATMRequest_throwsAndPreventsPersist(){
+        when(accountService.getAccountByIbanOrThrow(any())).thenReturn(fromAccount);
+        doThrow(IllegalArgumentException.class).when(transactionPolicy).enforceValidATMTransaction(any(), any());
+        assertThrows(IllegalArgumentException.class,
+                () -> transactionService.processATMRequest(atmRequestDTO));
+        verify(transactionRepository, never()).save(any());
+    }
 }
