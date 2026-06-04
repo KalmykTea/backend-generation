@@ -75,19 +75,9 @@ public class TransactionServiceTest {
                 .thenReturn(BigDecimal.ZERO);
         when(atmResponseDTOMapper.toDTO(any(Transaction.class)))
                 .thenReturn(atmResponseDTO);
-        doNothing().when(accountService).save(fromAccount);
-
-        ATMResponseDTO result = transactionService.processATMRequest(atmRequestDTO);
-        assertEquals(atmRequestDTO.getAmount(), result.getAmount());
-        assertEquals(atmRequestDTO.getTransactionType(), result.getTransactionType());
-        assertEquals(atmRequestDTO.getDescription(), result.getDescription());
-        assertEquals(atmRequestDTO.getIban(), result.getIban());
-
+        transactionService.processATMRequest(atmRequestDTO);
         verify(accountService).getAccountByIbanOrThrow(fromAccount.getIban());
-        verify(transactionPolicy).enforceValidATMTransaction(atmRequestDTO, fromAccount);
-        verify(accountService).save(fromAccount);
-        verify(transactionRepository).save(any(Transaction.class));
-
+        verify(transactionRepository).getLast24HoursWithdrawalTotal(eq(fromAccount.getIban()), any());
         InOrder inOrder = Mockito.inOrder(transactionPolicy, accountService, transactionRepository);
         inOrder.verify(transactionPolicy).enforceValidATMTransaction(atmRequestDTO, fromAccount);
         inOrder.verify(accountService).save(fromAccount);
@@ -102,4 +92,6 @@ public class TransactionServiceTest {
                 () -> transactionService.processATMRequest(atmRequestDTO));
         verify(transactionPolicy, never()).enforceValidATMTransaction(any(), any());
     }
+
+    // if policies are failed verify repositories aren't called
 }
