@@ -159,7 +159,7 @@ public class TransactionControllerTest {
                 .andExpect(jsonPath("$.description").value(withdrawal.getDescription()))
                 .andExpect(jsonPath("$.transactionType").value(withdrawal.getTransactionType().name()));
         BigDecimal balanceAfter = accountRepository.getAccountBalanceByIban(withdrawal.getIban());
-        assertTrue(balanceBefore.compareTo(balanceAfter) != 0);
+        assertTrue(balanceAfter.compareTo(balanceBefore.subtract(withdrawal.getAmount())) == 0);
     }
 
     @Test
