@@ -19,6 +19,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.util.List;
 
+import static org.hamcrest.Matchers.comparesEqualTo;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -102,8 +103,10 @@ public class AccountControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.iban").value(validLimitsRequestDTO.getIban()))
                 .andExpect(jsonPath("$.accountType").value(validLimitsRequestDTO.getAccountType().toString()))
-                .andExpect(jsonPath("$.absoluteLimit").value(validLimitsRequestDTO.getAbsoluteLimit()))
-                .andExpect(jsonPath("$.dailyLimit").value(validLimitsRequestDTO.getDailyLimit()));
+                .andExpect(jsonPath("$.absoluteLimit")
+                        .value(comparesEqualTo(validLimitsRequestDTO.getAbsoluteLimit()), BigDecimal.class))
+                .andExpect(jsonPath("$.dailyLimit")
+                        .value(comparesEqualTo(validLimitsRequestDTO.getDailyLimit()), BigDecimal.class));
     }
 
     @Test
