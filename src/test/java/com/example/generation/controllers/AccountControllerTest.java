@@ -1,18 +1,26 @@
 package com.example.generation.controllers;
 
+import com.example.generation.dtos.RequestDTOs.AccountLimitsRequestDTO;
 import com.example.generation.entities.Account;
 import com.example.generation.enums.AccountType;
 import com.example.generation.repositories.AccountRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.ObjectMapper;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import java.math.BigDecimal;
+import java.util.List;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -26,6 +34,56 @@ public class AccountControllerTest {
 
     @Autowired
     private AccountRepository accountRepository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    Account existingCheckingAccount;
+    AccountLimitsRequestDTO validLimitsRequestDTO;
+    AccountLimitsRequestDTO invalidLimitsRequestDTO;
+    List<AccountLimitsRequestDTO> validLimitDTOs;
+    List<AccountLimitsRequestDTO> invalidLimitDTOs;
+
+    @BeforeEach
+    void setup()
+    {
+        existingCheckingAccount = getAccountByEmailAndType("customer@test.com", AccountType.CHECKING);
+        validLimitsRequestDTO = new AccountLimitsRequestDTO(
+                existingCheckingAccount.getIban(),
+                AccountType.CHECKING, BigDecimal.valueOf(-1000), BigDecimal.valueOf(1000));
+        invalidLimitsRequestDTO = new AccountLimitsRequestDTO(
+                existingCheckingAccount.getIban(), AccountType.CHECKING,
+                BigDecimal.valueOf(-1000), BigDecimal.valueOf(-1000)
+        );
+        validLimitDTOs = List.of(
+                new AccountLimitsRequestDTO(
+                        null,
+                        AccountType.CHECKING,
+                        BigDecimal.valueOf(-100),
+                        BigDecimal.valueOf(100)
+                ),
+                new AccountLimitsRequestDTO(
+                        null,
+                        AccountType.SAVINGS,
+                        BigDecimal.valueOf(-500),
+                        BigDecimal.valueOf(100)
+                )
+        );
+        invalidLimitDTOs = List.of(
+                new AccountLimitsRequestDTO(
+                        null,
+                        AccountType.CHECKING,
+                        BigDecimal.valueOf(100),
+                        BigDecimal.valueOf(-100)
+                ),
+                new AccountLimitsRequestDTO(
+                        null,
+                        AccountType.CHECKING,
+                        BigDecimal.valueOf(500),
+                        BigDecimal.valueOf(-100)
+                )
+        );
+    }
 
 
     //////handle authorization because the end point should not be public
@@ -63,6 +121,59 @@ public class AccountControllerTest {
         mockMvc.perform(get("/accounts/user")
                         .param("userId", otherUserId.toString()))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithUserDetails(value = "employee@test.com")
+    void update_returnsIsOk() throws Exception {
+        mockMvc.perform(patch("/accounts/" + validLimitsRequestDTO.getIban())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validLimitsRequestDTO)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.iban").value(validLimitsRequestDTO.getIban()))
+                .andExpect(jsonPath("$.accountType").value(validLimitsRequestDTO.getAccountType().toString()))
+                .andExpect(jsonPath("$.absoluteLimit").value(validLimitsRequestDTO.getAbsoluteLimit()))
+                .andExpect(jsonPath("$.dailyLimit").value(validLimitsRequestDTO.getDailyLimit()));
+    }
+
+    @Test
+    @WithUserDetails(value = "customer@test.com")
+    void update_returnsForbiddenWhenUnauthenticated() throws Exception {
+        mockMvc.perform(patch("/accounts/" + validLimitsRequestDTO.getIban())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validLimitsRequestDTO)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void update_returnsUnauthorisedWhenNoToken() throws Exception {
+        mockMvc.perform(patch("/accounts/" + validLimitsRequestDTO.getIban())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validLimitsRequestDTO)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithUserDetails(value = "employee@test.com")
+    void update_returnsBadRequestForInvalidPayload() throws Exception {
+        mockMvc.perform(patch("/accounts/" + invalidLimitsRequestDTO.getIban())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidLimitsRequestDTO)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("Validation Failed"))
+                .andExpect(jsonPath("$.errors[0].field").value("dailyLimit"))
+                .andExpect(jsonPath("$.errors[0].message").value("must be greater than or equal to 0"))
+                .andExpect(jsonPath("$.timestamp").exists());
+    }
+
+    @Test
+    @WithUserDetails(value = "employee@test.com")
+    void update_returnsNotFoundForInvalidIban() throws Exception {
+        mockMvc.perform(patch("/accounts/" + "NL00INHO000000000")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(validLimitsRequestDTO)))
+                .andExpect(status().isNotFound());
     }
 
     private Account getAccountByEmailAndType(String email, AccountType accountType) {
