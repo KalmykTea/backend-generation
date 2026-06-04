@@ -21,7 +21,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     @Query("SELECT COALESCE(sum(t.amount), 0) FROM Transaction t " +
             "WHERE t.timestamp BETWEEN :startOfDay AND :endOfDay " +
-            "AND t.transactionType IN ('WITHDRAWAL', 'TRANSFER')" +
+            "AND t.transactionType IN ('WITHDRAWAL', 'TRANSFER') " +
             "AND t.fromAccount.iban = :iban"
     )
     BigDecimal getWithdrawalTotalWithinDurationByIban(
