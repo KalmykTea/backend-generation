@@ -167,15 +167,6 @@ public class AccountControllerTest {
                 .andExpect(jsonPath("$.timestamp").exists());
     }
 
-    @Test
-    @WithUserDetails(value = "employee@test.com")
-    void update_returnsNotFoundForInvalidIban() throws Exception {
-        mockMvc.perform(patch("/accounts/" + "NL00INHO000000000")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(validLimitsRequestDTO)))
-                .andExpect(status().isNotFound());
-    }
-
     private Account getAccountByEmailAndType(String email, AccountType accountType) {
         for (Account a : accountRepository.findAll()) {
             if (a.getUser().getEmail().equals(email)

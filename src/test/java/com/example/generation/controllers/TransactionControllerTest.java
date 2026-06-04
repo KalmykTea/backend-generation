@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @AutoConfigureMockMvc
 @Transactional
 @ActiveProfiles("test")
-public class TransactionControllerFunctionalTest {
+public class TransactionControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -43,22 +43,29 @@ public class TransactionControllerFunctionalTest {
     private AccountRepository accountRepository;
 
     private Account account;
+    private ATMRequestDTO deposit;
+    private ATMRequestDTO withdrawal;
 
     @BeforeEach
     void setUp() {
         account = getAccountByEmailAndType("customer@test.com", AccountType.SAVINGS);
-    }
-
-    @Test
-    @WithUserDetails(value = "customer@test.com")
-    void deposit_persistsAndReturnsATMTransaction() throws Exception {
-        ATMRequestDTO deposit = createATMRequest(
+        deposit = createATMRequest(
                 account,
                 BigDecimal.valueOf(100),
                 "deposit transaction",
                 TransactionType.DEPOSIT
         );
+        withdrawal = createATMRequest(
+                account,
+                BigDecimal.valueOf(100),
+                "withdrawal transaction",
+                TransactionType.WITHDRAWAL
+        );
+    }
 
+    @Test
+    @WithUserDetails(value = "customer@test.com")
+    void deposit_persistsAndReturnsATMTransaction() throws Exception {
         performPostForATMRequest("/transactions/deposit", deposit)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.iban").value(deposit.getIban()))
@@ -67,16 +74,12 @@ public class TransactionControllerFunctionalTest {
                 .andExpect(jsonPath("$.transactionType").value(deposit.getTransactionType().name()));
     }
 
+    // make a request for that account to make sure the balance is correct
+
     @Test
     @WithUserDetails(value = "customer@test.com")
     void deposit_returnsForbiddenWhenUserDoesNotOwnAccount() throws Exception {
-        ATMRequestDTO deposit = new ATMRequestDTO(
-                "NL00INHO0000000000",
-                BigDecimal.valueOf(100),
-                "deposit transaction",
-                TransactionType.DEPOSIT
-        );
-
+        deposit.setIban("NL00INHO0000000000");
         performPostForATMRequest("/transactions/deposit", deposit)
                 .andExpect(status().isForbidden());
     }
@@ -84,13 +87,7 @@ public class TransactionControllerFunctionalTest {
     @Test
     @WithUserDetails(value = "customer@test.com")
     void deposit_returnsBadRequestWhenDTOFailsValidation() throws Exception {
-        ATMRequestDTO deposit = createATMRequest(
-                account,
-                BigDecimal.valueOf(-100),
-                "deposit transaction",
-                TransactionType.DEPOSIT
-        );
-
+        deposit.setAmount(BigDecimal.valueOf(-100));
         performPostForATMRequest("/transactions/deposit", deposit)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
@@ -103,14 +100,8 @@ public class TransactionControllerFunctionalTest {
     @Test
     @WithUserDetails(value = "customer@test.com")
     void withdrawal_returnsBadRequestWhenDTOFailsValidation() throws Exception {
-        ATMRequestDTO invalidWithdrawal = createATMRequest(
-                account,
-                BigDecimal.valueOf(-1000),
-                "withdrawal transaction",
-                TransactionType.WITHDRAWAL
-        );
-
-        performPostForATMRequest("/transactions/withdraw", invalidWithdrawal)
+        withdrawal.setAmount(BigDecimal.valueOf(-1000));
+        performPostForATMRequest("/transactions/withdraw", withdrawal)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value("Validation Failed"))
@@ -156,13 +147,6 @@ public class TransactionControllerFunctionalTest {
     @Test
     @WithUserDetails(value = "customer@test.com")
     void withdrawal_persistsAndReturnsATMTransaction() throws Exception {
-        ATMRequestDTO withdrawal = createATMRequest(
-                account,
-                BigDecimal.valueOf(100),
-                "withdrawal transaction",
-                TransactionType.WITHDRAWAL
-        );
-
         performPostForATMRequest("/transactions/withdraw", withdrawal)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.iban").value(withdrawal.getIban()))
@@ -174,13 +158,7 @@ public class TransactionControllerFunctionalTest {
     @Test
     @WithUserDetails(value = "customer@test.com")
     void withdrawal_returnsForbiddenWhenUserDoesNotOwnAccount() throws Exception {
-        ATMRequestDTO withdrawal = new ATMRequestDTO(
-                "NL00INHO0000000000",
-                BigDecimal.valueOf(100),
-                "withdrawal transaction",
-                TransactionType.WITHDRAWAL
-        );
-
+        withdrawal.setIban("NL00INHO0000000");
         performPostForATMRequest("/transactions/withdraw", withdrawal)
                 .andExpect(status().isForbidden());
     }
