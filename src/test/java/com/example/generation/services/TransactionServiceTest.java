@@ -20,8 +20,9 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
@@ -71,13 +72,19 @@ public class TransactionServiceTest {
     void processATMRequest_executesStepsInCorrectOrder() {
         when(accountService.getAccountByIbanOrThrow(atmRequestDTO.getIban()))
                 .thenReturn(fromAccount);
-        when(transactionRepository.getLast24HoursWithdrawalTotal(eq(fromAccount.getIban()), any()))
+        when(transactionRepository.getWithdrawalTotalWithinDurationByIban(
+                eq(fromAccount.getIban()),
+                eq(LocalDate.now().atStartOfDay()),
+                eq(LocalDate.now().atTime(LocalTime.MAX))))
                 .thenReturn(BigDecimal.ZERO);
         when(atmResponseDTOMapper.toDTO(any(Transaction.class)))
                 .thenReturn(atmResponseDTO);
         transactionService.processATMRequest(atmRequestDTO);
         verify(accountService).getAccountByIbanOrThrow(fromAccount.getIban());
-        verify(transactionRepository).getLast24HoursWithdrawalTotal(eq(fromAccount.getIban()), any());
+        verify(transactionRepository).getWithdrawalTotalWithinDurationByIban(
+                eq(fromAccount.getIban()),
+                eq(LocalDate.now().atStartOfDay()),
+                eq(LocalDate.now().atTime(LocalTime.MAX)));
         InOrder inOrder = Mockito.inOrder(transactionPolicy, accountService, transactionRepository);
         inOrder.verify(transactionPolicy).enforceValidATMTransaction(atmRequestDTO, fromAccount);
         inOrder.verify(accountService).save(fromAccount);

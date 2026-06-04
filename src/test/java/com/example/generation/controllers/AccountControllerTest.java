@@ -118,12 +118,13 @@ public class AccountControllerTest {
                 .andExpect(status().isForbidden());
     }
 
+    // Springboot makes 401s appear as 403s by default
     @Test
-    void update_returnsUnauthorisedWhenNoToken() throws Exception {
+    void update_returnsForbiddenWhenNoToken() throws Exception {
         mockMvc.perform(patch("/accounts/" + validLimitsRequestDTO.getIban())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validLimitsRequestDTO)))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 
     @Test

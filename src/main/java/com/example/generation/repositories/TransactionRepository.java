@@ -19,10 +19,14 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     @Query("SELECT t FROM Transaction t WHERE t.fromAccount.iban = :iban OR t.toAccount.iban = :iban")
     Page<Transaction> findByAccountIBAN(@Param("iban") String accountIBAN, Pageable pageable);
 
-    @Query("SELECT COALESCE(sum(t.amount), 0) " +
-            "FROM Transaction t " +
-            "WHERE t.timestamp >= :dateTime " +
-            "AND t.transactionType IN ('WITHDRAWAL', 'TRANSFER') " +
-            "AND t.fromAccount.iban = :iban")
-    BigDecimal getLast24HoursWithdrawalTotal(@Param("iban") String iban, @Param("dateTime") LocalDateTime dateTime);
+    @Query("SELECT COALESCE(sum(t.amount), 0) FROM Transaction t " +
+            "WHERE t.timestamp BETWEEN :startOfDay AND :endOfDay " +
+            "AND t.transactionType IN ('WITHDRAWAL', 'TRANSFER')" +
+            "AND t.fromAccount.iban = :iban"
+    )
+    BigDecimal getWithdrawalTotalWithinDurationByIban(
+            @Param("iban") String iban,
+            @Param("startOfDay") LocalDateTime startOfDay,
+            @Param("endOfDay") LocalDateTime endOfDay
+    );
 }
