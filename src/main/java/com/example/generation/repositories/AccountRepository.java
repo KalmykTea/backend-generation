@@ -2,7 +2,10 @@ package com.example.generation.repositories;
 
 import com.example.generation.entities.Account;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,4 +17,7 @@ public interface AccountRepository extends JpaRepository<Account, String> {
     List<Account> findByUserId(Long userId);
 
     boolean existsByIbanAndUserId(String iban, Long userId);
+
+    @Query("SELECT a.balance FROM Account a WHERE a.iban = :iban")
+    BigDecimal getAccountBalanceByIban(@Param("iban") String iban);
 }
