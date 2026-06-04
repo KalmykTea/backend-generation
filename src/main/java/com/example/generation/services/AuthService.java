@@ -60,6 +60,7 @@ public class AuthService {
             user.setAddress(savedAddress);
         }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        userRepository.save(user);
         return jwtProvider.generateToken(user.getEmail());
     }
 
