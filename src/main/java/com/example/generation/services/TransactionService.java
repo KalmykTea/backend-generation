@@ -80,6 +80,16 @@ public class TransactionService {
         return transactionResponseDTOMapper.toDTO(saved);
     }
 
+    /**
+     * Processes a deposit or withdrawal ATM request.
+     * Validates the request, updates the account balance, persists the transaction,
+     * and returns a response DTO.
+     *
+     * @param dto the ATM request containing the IBAN, amount, and transaction type
+     * @return a response DTO representing the persisted transaction
+     * @throws jakarta.persistence.EntityNotFoundException if no account exists for the given IBAN
+     * @throws IllegalArgumentException if the transaction violates any transaction policy
+     */
     @Transactional
     public ATMResponseDTO processATMRequest(ATMRequestDTO dto) {
         Account account = accountService.getAccountByIbanOrThrow(dto.getIban());
