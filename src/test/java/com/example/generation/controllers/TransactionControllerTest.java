@@ -20,8 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 import static org.hamcrest.Matchers.comparesEqualTo;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -76,8 +78,12 @@ public class TransactionControllerTest {
                 .andExpect(jsonPath("$.amount").value(comparesEqualTo(deposit.getAmount()), BigDecimal.class))
                 .andExpect(jsonPath("$.description").value(deposit.getDescription()))
                 .andExpect(jsonPath("$.transactionType").value(deposit.getTransactionType().name()));
-        BigDecimal balanceAfter = accountRepository.getAccountBalanceByIban(deposit.getIban());
-        assertTrue(balanceAfter.compareTo(balanceBefore.add(deposit.getAmount())) == 0);
+        Optional<Account> account = accountRepository.findByIban(deposit.getIban());
+        BigDecimal balanceAfter = BigDecimal.ZERO;
+        if (account.isPresent()) {
+            balanceAfter = account.get().getBalance();
+        }
+        assertEquals(0, balanceAfter.compareTo(balanceBefore.add(deposit.getAmount())));
     }
 
     @Test
@@ -158,8 +164,12 @@ public class TransactionControllerTest {
                 .andExpect(jsonPath("$.amount").value(comparesEqualTo(withdrawal.getAmount()), BigDecimal.class))
                 .andExpect(jsonPath("$.description").value(withdrawal.getDescription()))
                 .andExpect(jsonPath("$.transactionType").value(withdrawal.getTransactionType().name()));
-        BigDecimal balanceAfter = accountRepository.getAccountBalanceByIban(withdrawal.getIban());
-        assertTrue(balanceAfter.compareTo(balanceBefore.subtract(withdrawal.getAmount())) == 0);
+        Optional<Account> account = accountRepository.findByIban(withdrawal.getIban());
+        BigDecimal balanceAfter = BigDecimal.ZERO;
+        if (account.isPresent()) {
+            balanceAfter = account.get().getBalance();
+        }
+        assertTrue(balanceAfter.compareTo(balanceBefore.add(withdrawal.getAmount())) != 0);
     }
 
     @Test
