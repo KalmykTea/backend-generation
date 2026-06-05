@@ -51,6 +51,15 @@ public class AccountService {
         return accountRepository.findByUserId(userId);
     }
 
+    /**
+     * Updates the daily and/or absolute limits of an account.
+     * Only non-null fields in the request are applied.
+     *
+     * @param accountLimitsRequestDTO the new limit values to apply
+     * @param iban the IBAN of the account to update
+     * @return a response DTO reflecting the updated account limits
+     * @throws EntityNotFoundException if no account exists for the given IBAN
+     */
     public AccountLimitsResponseDTO update(AccountLimitsRequestDTO accountLimitsRequestDTO, String iban) {
         Account existing = this.getAccountByIbanOrThrow(iban);
         if (accountLimitsRequestDTO.getDailyLimit() != null) {
@@ -84,6 +93,14 @@ public class AccountService {
                 .toList();
     }
 
+    /**
+     * Creates and persists a checking and savings account for the given user,
+     * applying the limits specified in the request DTOs.
+     *
+     * @param user the user to create accounts for
+     * @param accountLimitsRequestDTOs the limit configurations for each account type
+     * @throws IllegalArgumentException if account types are not distinct or an unsupported type is provided
+     */
     public void createAccountsForUser(User user, List<AccountLimitsRequestDTO> accountLimitsRequestDTOs) {
         accountPolicy.enforceDistinctAccountTypes(accountLimitsRequestDTOs);
         Map<AccountType, Account> accountMap = Map.of(
