@@ -57,7 +57,7 @@ public class UserService implements UserDetailsService {
 
         // check if user status is Pending
         if (user.getUserStatus() != UserStatus.PENDING) {
-            throw new EntityNotFoundException("User is not pending approval");
+            throw new IllegalStateException("User is not pending approval");
         }
 
         // change status to Approved, save, create accounts

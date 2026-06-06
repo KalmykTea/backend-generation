@@ -84,6 +84,14 @@ public class AccountControllerTest {
     }
 
     @Test
+    void getIbanByName_noToken_returns403() throws Exception {
+        mockMvc.perform(get("/accounts/search")
+                        .param("firstName", "Jane")
+                        .param("lastName", "Doe"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     @WithUserDetails(value = "customer@test.com")
     void getAccountsByUserId_customerSeesOtherUserAccounts_returns403() throws Exception {
         Account otherAccount = getAccountByEmailAndType("insufficient@test.com", AccountType.CHECKING);

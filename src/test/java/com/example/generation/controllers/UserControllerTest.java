@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -78,6 +79,7 @@ public class UserControllerTest {
         );
     }
 
+    // approve users tests
     @Test
     @WithUserDetails("employee@test.com")
     void approveUser_returnsBadRequestForInvalidPayload() throws Exception {
@@ -89,15 +91,12 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.message").value("Duplicate account types are not allowed"));
     }
 
-/**
- * This test fails because it returns 404 (User is not pending)
- * the error code is incorrect and should be changed to 500
- * @Test
+    @Test
     @WithUserDetails("employee@test.com")
     void approveUser_returnsIsOk() throws Exception {
         mockMvc.perform(post("/users/" + pending.getId() + "/approve")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(validLimitDTOs)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validLimitDTOs)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(pending.getId()))
                 .andExpect(jsonPath("$.firstName").value(pending.getFirstName()))
@@ -106,7 +105,39 @@ public class UserControllerTest {
 
     @Test
     void approveUser_returnsForbiddenWhenUnauthorized() throws Exception {
-
+        mockMvc.perform(post("/users/" + pending.getId() + "/approve")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validLimitDTOs)))
+                .andExpect(status().isForbidden());
     }
- **/
+
+    @Test
+    @WithUserDetails("employee@test.com")
+    void approveUser_nonExistentUser_returns404() throws Exception {
+        mockMvc.perform(post("/users/" + 9999L + "/approve")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validLimitDTOs)))
+                .andExpect(status().isNotFound());
+    }
+
+    // get pending users tests
+    @Test
+    @WithUserDetails(value = "employee@test.com")
+    void getPendingUsers_employeeToken_returns200() throws Exception {
+        mockMvc.perform(get("/users/pending"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithUserDetails(value = "customer@test.com")
+    void getPendingUsers_customerToken_returns403() throws Exception {
+        mockMvc.perform(get("/users/pending"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void getPendingUsers_noToken_returns403() throws Exception {
+        mockMvc.perform(get("/users/pending"))
+                .andExpect(status().isForbidden());
+    }
 }

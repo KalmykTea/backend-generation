@@ -20,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
-import java.util.Optional;
 
 import static org.hamcrest.Matchers.comparesEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -225,6 +224,14 @@ public class TransactionControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void transfer_noToken_returns403() throws Exception {
+        Account fromAccount = getAccountByEmailAndType("customer@test.com", AccountType.CHECKING);
+        Account toAccount = getAccountByEmailAndType("insufficient@test.com", AccountType.CHECKING);
+        performPostForTransferRequest(fromAccount.getIban(), toAccount.getIban(), BigDecimal.valueOf(10.00))
+                .andExpect(status().isForbidden());
+    }
+
     private Account getAccountByEmailAndType(String email, AccountType accountType) {
         for (Account a : accountRepository.findAll()) {
             if (a.getUser().getEmail().equals(email)
@@ -269,5 +276,33 @@ public class TransactionControllerTest {
                 .content(objectMapper.writeValueAsString(dto)));
     }
 
+    // get customer transactions tests
+    @Test
+    @WithUserDetails(value = "customer@test.com")
+    void getCustomerTransactions_customerToken_returns200() throws Exception {
+        Account customerAccount = getAccountByEmailAndType("customer@test.com", AccountType.CHECKING);
+        Long userId = customerAccount.getUser().getId();
 
+        mockMvc.perform(get("/transactions/" + userId))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithUserDetails(value = "customer@test.com")
+    void getCustomerTransactions_customerViewsOtherUserTransactions_returns403() throws Exception {
+        Account customerAccount = getAccountByEmailAndType("insufficient@test.com", AccountType.CHECKING);
+        Long userId = customerAccount.getUser().getId();
+
+        mockMvc.perform(get("/transactions/" + userId))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void getCustomerTransactions_noToken_returns403() throws Exception {
+        Account customerAccount = getAccountByEmailAndType("insufficient@test.com", AccountType.CHECKING);
+        Long userId = customerAccount.getUser().getId();
+
+        mockMvc.perform(get("/transactions/" + userId))
+                .andExpect(status().isForbidden());
+    }
 }
