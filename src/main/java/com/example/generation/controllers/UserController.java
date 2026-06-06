@@ -1,7 +1,6 @@
 package com.example.generation.controllers;
 
 import com.example.generation.dtos.RequestDTOs.AccountLimitsRequestDTO;
-import com.example.generation.dtos.RequestDTOs.UserFullRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.UserFullResponseDTO;
 import com.example.generation.dtos.ResponseDTOs.UserResponseDTO;
 import com.example.generation.entities.User;
@@ -27,20 +26,12 @@ import java.util.List;
 @RequestMapping("users")
 public class UserController {
     private final UserService userService;
-    private final AddressService addressService;
-    private final UserFullRequestDTOMapper userRequestDTOMapper;
-    private final UserResponseDTOMapper userResponseDTOMapper;
     private final UserFullResponseDTOMapper userFullResponseDTOMapper;
 
     public UserController(UserService userService, AddressService addressService, UserFullRequestDTOMapper userRequestDTOMapper, UserResponseDTOMapper userResponseDTOMapper, UserFullResponseDTOMapper userFullResponseDTOMapper) {
         this.userService = userService;
-        this.addressService = addressService;
-        this.userRequestDTOMapper = userRequestDTOMapper;
-        this.userResponseDTOMapper = userResponseDTOMapper;
         this.userFullResponseDTOMapper = userFullResponseDTOMapper;
     }
-
-    // controller methods based on user stories with swagger doc code go here
 
     @Operation(summary = "Get list of customers pending approval")
     @GetMapping("/pending")
