@@ -80,4 +80,11 @@ public class UserController {
         User user = userService.getUserById(id);
         return new ResponseEntity<>(userFullResponseDTOMapper.toDTO(user), HttpStatus.OK);
     }
+
+    @Operation(summary = "Get all users")
+    @GetMapping
+    @PreAuthorize("hasAuthority('EMPLOYEE')")
+    public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
+        return new ResponseEntity<>(userService.getAllUsers(), HttpStatus.OK);
+    }
 }

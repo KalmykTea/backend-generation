@@ -80,5 +80,10 @@ public class UserService implements UserDetailsService {
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
     }
 
-
+    public List<UserResponseDTO> getAllUsers() {
+        return userRepository.findAll()
+                .stream()
+                .map(userResponseDTOMapper::toDTO)
+                .toList();
+    }
 }
