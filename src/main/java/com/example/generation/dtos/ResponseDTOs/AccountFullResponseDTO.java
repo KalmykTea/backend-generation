@@ -1,5 +1,6 @@
 package com.example.generation.dtos.ResponseDTOs;
 
+import com.example.generation.enums.AccountStatus;
 import com.example.generation.enums.AccountType;
 import lombok.Builder;
 import lombok.Value;
@@ -14,4 +15,5 @@ public class AccountFullResponseDTO {
     BigDecimal balance;
     BigDecimal absoluteLimit;
     BigDecimal dailyLimit;
+    AccountStatus accountStatus;
 }
