@@ -85,11 +85,11 @@ public class AccountService {
         return accountFullResponseDTOMapper.toDTO(account);
     }
 
-    public List<String> getIbansByUserName(String firstName, String lastName) {
+    public List<AccountFullResponseDTO> getIbansByUserName(String firstName, String lastName) {
         return accountRepository
                 .findByUserFirstNameAndUserLastName(firstName, lastName)
                 .stream()
-                .map(Account::getIban)
+                .map(accountFullResponseDTOMapper::toDTO)
                 .toList();
     }
 

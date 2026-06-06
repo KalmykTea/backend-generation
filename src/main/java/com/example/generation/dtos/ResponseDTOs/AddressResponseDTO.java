@@ -8,6 +8,8 @@ import lombok.Value;
 @Builder
 public class AddressResponseDTO {
     long id;
+    String addressLine;
+    String postalCode;
     String city;
     String country;
 }

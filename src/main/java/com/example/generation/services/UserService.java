@@ -75,5 +75,10 @@ public class UserService implements UserDetailsService {
                 .toList();
     }
 
+    public User getUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
+    }
+
 
 }
