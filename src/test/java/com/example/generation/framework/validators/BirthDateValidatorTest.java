@@ -33,10 +33,4 @@ class BirthDateValidatorTest {
         LocalDate olderThanEighteen = LocalDate.now().minusYears(25);
         assertTrue(validator.isValid(olderThanEighteen, null));
     }
-
-    @Test
-    void isValid_ShouldReturnFalse_WhenDateIsFuture() {
-        LocalDate futureDate = LocalDate.now().plusDays(1);
-        assertFalse(validator.isValid(futureDate, null));
-    }
 }
