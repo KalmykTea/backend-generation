@@ -39,18 +39,6 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    public User register(User user) {
-        if (userRepository.existsByEmail(user.getEmail())) {
-            throw new EntityAlreadyExistsException("email", "Email already exists");
-        }
-        if (userRepository.existsByBsnNumber(user.getBsnNumber())) {
-            throw new EntityAlreadyExistsException("bsnNumber", "BSN already exists");
-        }
-
-        return userRepository.save(user);
-    }
-
-    @Transactional
     public UserResponseDTO approveUser(Long id, List<AccountLimitsRequestDTO> accountLimitsRequestDTOS) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
