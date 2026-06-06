@@ -26,6 +26,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
@@ -35,6 +36,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -117,11 +119,6 @@ public class TransactionServiceTest {
                 .fromAccountIban(fromAccount.getIban())
                 .toAccountIban(toAccount.getIban())
                 .build();
-
-        // set authenticated user in security context
-        UsernamePasswordAuthenticationToken auth =
-                new UsernamePasswordAuthenticationToken(currentUser, null);
-        SecurityContextHolder.getContext().setAuthentication(auth);
     }
 
     // clear user auth after each test
@@ -174,6 +171,7 @@ public class TransactionServiceTest {
 
     @Test
     void processTransfer_returnsTransactionResponseDTO() {
+        setUpTransferAuth();
         LocalDate today = LocalDate.now();
         // tell mocks what to return
         when(accountService.getAccountByIbanOrThrow(transferRequestDTO.getFromAccountIban()))
@@ -194,6 +192,7 @@ public class TransactionServiceTest {
 
     @Test
     void processTransfer_throwsEntityNotFoundExceptionWhenAccountNotFound() {
+        setUpTransferAuth();
         when(accountService.getAccountByIbanOrThrow(any()))
                 .thenThrow(EntityNotFoundException.class);
         assertThrows(EntityNotFoundException.class,
@@ -203,6 +202,7 @@ public class TransactionServiceTest {
 
     @Test
     void processTransfer_throwsAccessDeniedExceptionWhenCustomerTransfersFromOtherAccount() {
+        setUpTransferAuth();
         when(accountService.getAccountByIbanOrThrow(transferRequestDTO.getFromAccountIban()))
                 .thenReturn(fromAccount);
         when(accountService.getAccountByIbanOrThrow(transferRequestDTO.getToAccountIban()))
@@ -218,23 +218,30 @@ public class TransactionServiceTest {
     void findTransactionsByUserId_returnsPageFromRepository() {
         // prepare pageable and mock repository response
         Pageable pageable = PageRequest.of(0, 10);
-        Page<Transaction> emptyPage = Page.empty();
+        Transaction transaction = new Transaction();
+        Page<Transaction> page = new PageImpl<>(List.of(transaction));
         when(transactionRepository.findTransactionsByUserId(1L, pageable))
-                .thenReturn(emptyPage);
+                .thenReturn(page);
         Page<Transaction> result = transactionService.findTransactionsByUserId(1L, pageable);
-        assertEquals(emptyPage, result);
+        assertEquals(1, result.getTotalElements());
         verify(transactionRepository).findTransactionsByUserId(1L, pageable);
     }
 
     @Test
     void getTransactionsByAccountIBAN_returnsPageOfDTOs() {
+        // prepare pageable and mock repository response with one transaction
         Pageable pageable = PageRequest.of(0, 10);
+        Transaction transaction = new Transaction();
+        Page<Transaction> page = new PageImpl<>(List.of(transaction));
         when(accountService.getAccountByIbanOrThrow(fromAccount.getIban()))
                 .thenReturn(fromAccount);
         when(transactionRepository.findByAccountIBAN(fromAccount.getIban(), pageable))
-                .thenReturn(Page.empty());
+                .thenReturn(page);
+        when(transactionResponseDTOMapper.toDTO(any(Transaction.class)))
+                .thenReturn(transferResponseDTO);
         Page<TransactionResponseDTO> result = transactionService
                 .getTransactionsByAccountIBAN(fromAccount.getIban(), pageable);
+        assertEquals(1, result.getTotalElements());
         verify(accountService).getAccountByIbanOrThrow(fromAccount.getIban());
         verify(transactionRepository).findByAccountIBAN(fromAccount.getIban(), pageable);
     }
@@ -247,5 +254,12 @@ public class TransactionServiceTest {
         assertThrows(EntityNotFoundException.class,
                 () -> transactionService.getTransactionsByAccountIBAN(fromAccount.getIban(), pageable));
         verify(transactionRepository, never()).findByAccountIBAN(any(), any());
+    }
+
+    // set authenticated user for processTransfer tests
+    private void setUpTransferAuth() {
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(currentUser, null);
+        SecurityContextHolder.getContext().setAuthentication(auth);
     }
 }
