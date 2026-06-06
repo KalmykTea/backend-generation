@@ -4,6 +4,7 @@ import com.example.generation.domain.policy.AccountPolicy;
 import com.example.generation.dtos.RequestDTOs.AccountLimitsRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.AccountFullResponseDTO;
 import com.example.generation.dtos.ResponseDTOs.AccountClosureResponse;
+import com.example.generation.dtos.ResponseDTOs.AccountIbanResponseDTO;
 import com.example.generation.dtos.ResponseDTOs.AccountLimitsResponseDTO;
 import com.example.generation.entities.Account;
 import com.example.generation.entities.User;
@@ -27,6 +28,8 @@ import java.util.Random;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
+
+import static java.util.stream.Collectors.toList;
 
 @Service
 public class AccountService {
@@ -85,11 +88,14 @@ public class AccountService {
         return accountFullResponseDTOMapper.toDTO(account);
     }
 
-    public List<String> getIbansByUserName(String firstName, String lastName) {
+    public List<AccountIbanResponseDTO> getIbansByUserName(String firstName, String lastName) {
         return accountRepository
                 .findByUserFirstNameAndUserLastName(firstName, lastName)
                 .stream()
-                .map(Account::getIban)
+                .map(account -> AccountIbanResponseDTO.builder()
+                        .iban(account.getIban())
+                    .accountType(account.getAccountType())
+                    .build())
                 .toList();
     }
 
