@@ -7,6 +7,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
     //Jpa repository includes all the methods from Crud repo and Pagination and sorting repo
 
@@ -15,4 +18,15 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     @Query("SELECT t FROM Transaction t WHERE t.fromAccount.iban = :iban OR t.toAccount.iban = :iban")
     Page<Transaction> findByAccountIBAN(@Param("iban") String accountIBAN, Pageable pageable);
+
+    @Query("SELECT COALESCE(sum(t.amount), 0) FROM Transaction t " +
+            "WHERE t.timestamp BETWEEN :startOfDay AND :endOfDay " +
+            "AND t.transactionType IN ('WITHDRAWAL', 'TRANSFER') " +
+            "AND t.fromAccount.iban = :iban"
+    )
+    BigDecimal getWithdrawalTotalWithinDurationByIban(
+            @Param("iban") String iban,
+            @Param("startOfDay") LocalDateTime startOfDay,
+            @Param("endOfDay") LocalDateTime endOfDay
+    );
 }

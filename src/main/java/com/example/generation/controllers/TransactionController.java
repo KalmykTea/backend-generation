@@ -2,9 +2,11 @@ package com.example.generation.controllers;
 
 import com.example.generation.dtos.RequestDTOs.ATMRequestDTO;
 import com.example.generation.dtos.RequestDTOs.TransactionRequestDTO;
+import com.example.generation.dtos.RequestDTOs.TransactionFilterRequest;
 import com.example.generation.dtos.ResponseDTOs.ATMResponseDTO;
 import com.example.generation.dtos.ResponseDTOs.TransactionResponseDTO;
 import com.example.generation.entities.Transaction;
+import com.example.generation.enums.TransactionType;
 import com.example.generation.mappers.ResponseDTOMappers.TransactionResponseDTOMapper;
 import com.example.generation.services.TransactionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,6 +24,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Tag(name = "Transactions", description = "Operations for managing transactions")
 @RestController
@@ -91,6 +99,7 @@ public class TransactionController {
             )
             @RequestBody @Valid TransactionRequestDTO transactionRequestDTO
     ) {
+        transactionRequestDTO.setTransactionType(TransactionType.TRANSFER);
         return transactionService.processTransfer(transactionRequestDTO);
     }
 
@@ -141,6 +150,7 @@ public class TransactionController {
             )
             @RequestBody @Valid ATMRequestDTO requestDTO
     ) {
+        requestDTO.setTransactionType(TransactionType.WITHDRAWAL);
         return transactionService.processATMRequest(requestDTO);
     }
 
@@ -191,6 +201,7 @@ public class TransactionController {
             )
             @RequestBody @Valid ATMRequestDTO requestDTO
     ) {
+        requestDTO.setTransactionType(TransactionType.DEPOSIT);
         return transactionService.processATMRequest(requestDTO);
     }
 
@@ -216,6 +227,41 @@ public class TransactionController {
         return transactions.map(transactionResponseDTOMapper::toDTO);
     }
 
+    @GetMapping("/{userId}")
+    @PreAuthorize("hasAuthority('CUSTOMER') and @permissionEvaluator.canViewUserTransactions(authentication, #userId)")
+    @Operation(summary = "Search and filter customer transactions", description = "Retrieve a paginated list of transactions for the authenticated customer with optional filters.")
+    public ResponseEntity<Page<TransactionResponseDTO>> getCustomerTransactions(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) BigDecimal amountLt,
+            @RequestParam(required = false) BigDecimal amountGt,
+            @RequestParam(required = false) BigDecimal amountEq,
+            @RequestParam(required = false) String iban,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @PathVariable Long userId) {
+
+        TransactionFilterRequest filters = new TransactionFilterRequest(startDate, endDate, amountLt, amountGt, amountEq, iban);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<TransactionResponseDTO> transactionPage = transactionService.getFilteredTransactions(filters, pageable, userId);
+
+        return new ResponseEntity<>(transactionPage, HttpStatus.OK);
+    }
+
+    @GetMapping("/all")
+    @PreAuthorize("hasAuthority('EMPLOYEE')")
+    @Operation(summary = "Get paginated list of all transactions", description = "Retrieve a paginated list of all transactions. Restricted to employees.")
+    public ResponseEntity<Page<TransactionResponseDTO>> getPaginatedTransactions(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<TransactionResponseDTO> transactionPage = transactionService.getPaginatedTransactions(pageable);
+
+        return new ResponseEntity<>(transactionPage, HttpStatus.OK);
+    }
+
+    //get transactions by account IBAN
     @Operation(summary = "Get transactions per account")
     @GetMapping("/{iban}/transactions")
     public ResponseEntity<Page<TransactionResponseDTO>> getTransactionsByAccountIBAN(@PathVariable String iban, Pageable pageable) {

@@ -4,6 +4,7 @@ import com.example.generation.dtos.RequestDTOs.AccountLimitsRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.UserResponseDTO;
 import com.example.generation.entities.User;
 import com.example.generation.enums.UserStatus;
+import com.example.generation.framework.exceptions.EntityAlreadyExistsException;
 import com.example.generation.mappers.ResponseDTOMappers.UserResponseDTOMapper;
 import com.example.generation.repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -34,28 +35,7 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException{
-        return userRepository.findUserByEmail(email).orElseThrow(() -> new UsernameNotFoundException(email));
-    }
-
-    // basic stuff, input custom logic according to your user stories
-    public Iterable<User> findAll(){
-        return userRepository.findAll();
-    }
-
-    public Optional<User> findById(long id){
-        return userRepository.findById(id);
-    }
-
-    public User save(User user){
-        return userRepository.save(user);
-    }
-
-    public User update(User user){
-        return userRepository.save(user);
-    }
-
-    public void deleteById(long id){
-        userRepository.deleteById(id);
+        return userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException(email));
     }
 
     @Transactional
@@ -65,7 +45,7 @@ public class UserService implements UserDetailsService {
 
         // check if user status is Pending
         if (user.getUserStatus() != UserStatus.PENDING) {
-            throw new EntityNotFoundException("User is not pending approval");
+            throw new IllegalStateException("User is not pending approval");
         }
 
         // change status to Approved, save, create accounts
@@ -83,5 +63,15 @@ public class UserService implements UserDetailsService {
                 .toList();
     }
 
+    public User getUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
+    }
 
+    public List<UserResponseDTO> getAllUsers() {
+        return userRepository.findAll()
+                .stream()
+                .map(userResponseDTOMapper::toDTO)
+                .toList();
+    }
 }

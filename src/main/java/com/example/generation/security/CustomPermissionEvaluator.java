@@ -42,6 +42,14 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
         return false;
     }
 
+    public boolean canViewUserTransactions(Authentication authentication, Object targetDomainObject) {
+        User user = getAuthenticatedUser(authentication);
+        if (targetDomainObject instanceof Long userId) {
+            return user.getId().equals(userId);
+        }
+        return false;
+    }
+
     private User getAuthenticatedUser(Authentication authentication) {
         cpePolicy.enforceUserIsAuthenticated(authentication);
         return (User) authentication.getPrincipal();
@@ -50,5 +58,13 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
     private boolean isCustomer(Authentication authentication) {
         return authentication.getAuthorities().stream()
                 .anyMatch(a -> Objects.equals(a.getAuthority(), "CUSTOMER"));
+    }
+
+    public boolean isOwner(Authentication authentication, Long userId) {
+        User currentUser = getAuthenticatedUser(authentication);
+        if (isCustomer(authentication)) {
+            return currentUser.getId().equals(userId);
+        }
+        return true; //because employees can access anything
     }
 }

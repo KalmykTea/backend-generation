@@ -2,11 +2,14 @@ package com.example.generation.dtos.RequestDTOs;
 
 import com.example.generation.enums.TransactionType;
 import jakarta.validation.constraints.*;
-import lombok.Data;
+import lombok.*;
 
 import java.math.BigDecimal;
 
-@Data
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class BaseTransactionRequestDTO {
     @Null
     private Long id;

@@ -9,4 +9,7 @@ public class UserResponseDTO {
     long id;
     String firstName;
     String lastName;
+
+    String role;
+    String status;
 }

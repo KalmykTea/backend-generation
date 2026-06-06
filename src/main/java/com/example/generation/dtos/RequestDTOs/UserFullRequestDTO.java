@@ -29,7 +29,7 @@ public class UserFullRequestDTO {
 
     @NotBlank(groups = {OnCreate.class, OnUpdate.class})
     @Size(min = 1, max = 100,  groups = {OnCreate.class,  OnUpdate.class})
-    @Pattern(regexp = "^[\\p{L}\\s\\-']+$", message = "Lastname contains invalid characters")
+    @Pattern(regexp = "^[\\p{L}\\s\\-']+$", message = "Lastname contains invalid characters", groups = {OnCreate.class, OnUpdate.class})
     private String lastName;
 
     @NotBlank(groups = {OnCreate.class, OnUpdate.class})
