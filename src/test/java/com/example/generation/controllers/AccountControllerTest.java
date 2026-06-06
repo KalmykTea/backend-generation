@@ -170,6 +170,71 @@ public class AccountControllerTest {
     }
 
     @Test
+    @WithUserDetails(value = "employee@test.com")
+    void getPaginatedAccounts_employeeToken_returns200() throws Exception {
+        mockMvc.perform(get("/accounts")
+                        .param("page", "0")
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content[0].iban").isNotEmpty())
+                .andExpect(jsonPath("$.content[0].accountType").isNotEmpty())
+                .andExpect(jsonPath("$.content[0].balance").isNumber())
+                .andExpect(jsonPath("$.content[0].accountStatus").isNotEmpty())
+                .andExpect(jsonPath("$.size").value(20))
+                .andExpect(jsonPath("$.number").value(0))
+                .andExpect(jsonPath("$.totalElements").isNumber());
+    }
+
+    @Test
+    @WithUserDetails(value = "customer@test.com")
+    void getPaginatedAccounts_customerToken_returns403() throws Exception {
+        mockMvc.perform(get("/accounts")
+                        .param("page", "0")
+                        .param("size", "20"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void getPaginatedAccounts_noToken_returns403() throws Exception {
+        mockMvc.perform(get("/accounts")
+                        .param("page", "0")
+                        .param("size", "20"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithUserDetails(value = "employee@test.com")
+    void closeAccount_employeeToken_returns200() throws Exception {
+        mockMvc.perform(patch("/accounts/" + existingCheckingAccount.getIban() + "/close"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accountNumber").value(existingCheckingAccount.getIban()))
+                .andExpect(jsonPath("$.status").value("CLOSED"))
+                .andExpect(jsonPath("$.closedAt").exists())
+                .andExpect(jsonPath("$.message").isNotEmpty());
+    }
+
+    @Test
+    @WithUserDetails(value = "customer@test.com")
+    void closeAccount_customerToken_returns403() throws Exception {
+        mockMvc.perform(patch("/accounts/" + existingCheckingAccount.getIban() + "/close"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void closeAccount_noToken_returns403() throws Exception {
+        mockMvc.perform(patch("/accounts/" + existingCheckingAccount.getIban() + "/close"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithUserDetails(value = "employee@test.com")
+    void closeAccount_nonExistingIban_returns404() throws Exception {
+        mockMvc.perform(patch("/accounts/NL00INHO0000000000/close"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void getPaginatedAccounts() {
     }
 
