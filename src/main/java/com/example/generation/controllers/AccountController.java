@@ -3,6 +3,7 @@ package com.example.generation.controllers;
 import com.example.generation.dtos.RequestDTOs.AccountLimitsRequestDTO;
 import com.example.generation.dtos.ResponseDTOs.AccountClosureResponse;
 import com.example.generation.dtos.ResponseDTOs.AccountFullResponseDTO;
+import com.example.generation.dtos.ResponseDTOs.AccountIbanResponseDTO;
 import com.example.generation.dtos.ResponseDTOs.AccountLimitsResponseDTO;
 import com.example.generation.entities.Account;
 import com.example.generation.framework.groups.OnUpdate;
@@ -127,8 +128,8 @@ public class AccountController {
     @Operation(summary = "Find user IBAN by first and last name")
     @GetMapping("/search")
     @PreAuthorize("hasAuthority('CUSTOMER') or hasAuthority('EMPLOYEE')")
-    public ResponseEntity<List<String>> getIbanByName(@RequestParam String firstName, @RequestParam String lastName) {
-        List<String> ibans = accountService.getIbansByUserName(firstName, lastName);
+    public ResponseEntity<List<AccountIbanResponseDTO>> getIbanByName(@RequestParam String firstName, @RequestParam String lastName) {
+        List<AccountIbanResponseDTO> ibans = accountService.getIbansByUserName(firstName, lastName);
 
         return new ResponseEntity<>(ibans, HttpStatus.OK);
     }
