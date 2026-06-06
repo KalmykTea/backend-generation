@@ -56,22 +56,32 @@ public class AccountControllerTest {
         );
     }
 
-
-    //////handle authorization because the end point should not be public
-    ///////conect the token with this
-    //////at least call the method that you need to get the token
-    ///
-    /// ///with user details solves de problem, i just be good to have aunothirized users in it
-
     @Test
     @WithUserDetails(value = "customer@test.com")
-    void getAccountsByUserId_customerSeesOwnAccounts_returns200() throws Exception {
-        Account account = getAccountByEmailAndType("customer@test.com", AccountType.CHECKING);
-        Long userId = account.getUser().getId();
+    void getAccountsByUserId_customerSeesOwnAccounts_returnsAccountDetails() throws Exception {
+        Account checkingAccount = getAccountByEmailAndType("customer@test.com", AccountType.CHECKING);
+        Account savingsAccount = getAccountByEmailAndType("customer@test.com", AccountType.SAVINGS);
+        Long userId = checkingAccount.getUser().getId();
 
         mockMvc.perform(get("/accounts/user")
                         .param("userId", userId.toString()))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].iban").isNotEmpty())
+                .andExpect(jsonPath("$[0].accountType").isNotEmpty())
+                .andExpect(jsonPath("$[0].balance").isNumber())
+                .andExpect(jsonPath("$[0].accountStatus").value("ACTIVE"))
+                .andExpect(jsonPath("$[1].iban").isNotEmpty())
+                .andExpect(jsonPath("$[1].accountStatus").value("ACTIVE"));
+    }
+
+    @Test
+    void getAccountsByUserId_noToken_returns403() throws Exception {
+        Account account = getAccountByEmailAndType("customer@test.com", AccountType.CHECKING);
+
+        mockMvc.perform(get("/accounts/user")
+                        .param("userId", account.getUser().getId().toString()))
+                .andExpect(status().isForbidden());
     }
 
     @Test

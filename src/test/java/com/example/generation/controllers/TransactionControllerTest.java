@@ -198,10 +198,26 @@ public class TransactionControllerTest {
     @WithUserDetails(value = "customer@test.com")
     void transfer_betweenOwnAccounts_returns200() throws Exception {
         Account fromAccount = getAccountByEmailAndType("customer@test.com", AccountType.CHECKING);
+        Account toAccount = getAccountByEmailAndType("customer@test.com", AccountType.SAVINGS);
+
+        performPostForTransferRequest(fromAccount.getIban(), toAccount.getIban(), BigDecimal.valueOf(10.00))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fromAccountIban").value(fromAccount.getIban()))
+                .andExpect(jsonPath("$.toAccountIban").value(toAccount.getIban()))
+                .andExpect(jsonPath("$.amount").value(comparesEqualTo(BigDecimal.valueOf(10.00)), BigDecimal.class))
+                .andExpect(jsonPath("$.transactionType").value("TRANSFER"));
+    }
+
+    @Test
+    @WithUserDetails(value = "customer@test.com")
+    void transfer_fromOtherCustomerAccount_returns200() throws Exception {
+        Account fromAccount = getAccountByEmailAndType("customer@test.com", AccountType.CHECKING);
         Account toAccount = getAccountByEmailAndType("insufficient@test.com", AccountType.CHECKING);
 
         performPostForTransferRequest(fromAccount.getIban(), toAccount.getIban(), BigDecimal.valueOf(10.00))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fromAccountIban").value(fromAccount.getIban()))
+                .andExpect(jsonPath("$.toAccountIban").value(toAccount.getIban()));
     }
 
     @Test
@@ -230,6 +246,19 @@ public class TransactionControllerTest {
         Account toAccount = getAccountByEmailAndType("insufficient@test.com", AccountType.CHECKING);
         performPostForTransferRequest(fromAccount.getIban(), toAccount.getIban(), BigDecimal.valueOf(10.00))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithUserDetails(value = "customer@test.com")
+    void transfer_exceedingDailyLimit_returns400() throws Exception {
+        Account fromAccount = getAccountByEmailAndType("customer@test.com", AccountType.CHECKING);
+        Account toAccount = getAccountByEmailAndType("insufficient@test.com", AccountType.CHECKING);
+
+        performPostForTransferRequest(fromAccount.getIban(), toAccount.getIban(), BigDecimal.valueOf(2001.00))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message")
+                        .value("Daily limit reached or transfer amount exceeds the daily limit."));
     }
 
     private Account getAccountByEmailAndType(String email, AccountType accountType) {
