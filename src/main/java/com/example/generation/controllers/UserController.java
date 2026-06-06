@@ -40,14 +40,6 @@ public class UserController {
         this.userFullResponseDTOMapper = userFullResponseDTOMapper;
     }
 
-    @Operation(summary = "Register a new customer")
-    @PostMapping("/register")
-    public ResponseEntity<UserResponseDTO> register(@Validated(OnCreate.class) @RequestBody UserFullRequestDTO userRequestDTO) {
-        User user = userRequestDTOMapper.toEntity(userRequestDTO);
-        User registeredUser = userService.register(user);
-        return new ResponseEntity<>(userResponseDTOMapper.toDTO(registeredUser), HttpStatus.CREATED);
-    }
-
     // controller methods based on user stories with swagger doc code go here
 
     @Operation(summary = "Get list of customers pending approval")
