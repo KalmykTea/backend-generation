@@ -26,7 +26,6 @@ hs_err_pid*
 replay_pid*
 src/.env
 
-src/main/resources/application.properties
 target
 target/classes/application.properties
 
